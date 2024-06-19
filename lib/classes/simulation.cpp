@@ -1,0 +1,194 @@
+#include "simulation.hpp"
+
+// ACCESS ======
+
+/* u (TopVec) */
+void Simulation::set_u(Vec2D& input_u){
+    u = input_u;
+}
+
+Vec2D& Simulation::get_u(){
+    return u;
+}
+
+/* evolver */
+void Simulation::setEvolverPtr(shared_ptr<Evolver> inputEvolverPtr){
+    evolverPtr = inputEvolverPtr;
+}
+
+shared_ptr<Evolver> Simulation::getEvolverPtr(){
+    return evolverPtr;
+}
+
+/* sysCalc */
+void Simulation::setSysPtr(shared_ptr<SysCalcs> inputSysPtr){
+    sysPtr = inputSysPtr;
+}
+
+shared_ptr<SysCalcs> Simulation::getSysPtr(){
+    return sysPtr;
+}
+
+/* recorder */
+void Simulation::setRecorderPtr(shared_ptr<Recorder> inputRecorderPtr){
+    recorderPtr = inputRecorderPtr;
+}
+
+shared_ptr<Recorder> Simulation::getRecorderPtr(){
+    return recorderPtr;
+}
+
+/* BC */
+void Simulation::setBC(BCFunc inputBCs){
+    BC = inputBCs;
+}
+
+/* mesh */
+void Simulation::setMesh(Mesh2D inputMesh){
+    mesh = inputMesh;
+}
+
+Mesh2D Simulation::getMesh(){
+    return mesh;
+}
+
+/* exporter */
+void Simulation::setExporter(Exporter inputExporter){
+    exporter = inputExporter;
+}
+
+/* simulation time and step */
+double Simulation::getTime(){
+    return t;
+}; 
+
+double Simulation::getStep(){
+    return step;
+}
+
+void Simulation::setResultsFolder(string inputResultsFolder){
+    resultsFolder = inputResultsFolder;
+}
+
+string Simulation::getResultsFolder(){
+    return resultsFolder;
+}
+
+
+
+// FUNCTIONALITY ======
+
+double Simulation::get_min_dt(){
+    evolverPtr->updateCh(u, sysPtr, mesh);
+    return evolverPtr->getTimeStep(mesh);
+}
+
+void Simulation::evolve(){
+
+    // applying boundary conditions
+    BC(u, mesh, sysPtr);
+
+
+    // getting time step and updating time
+    double dt = get_min_dt();
+    t += dt;
+    step += 1;
+
+
+    // give progress update if giveProgressUpdate enabled
+    if (giveProgressUpdate){
+        if (t < tMax){
+            progressUpdateCounter += dt;
+            if (progressUpdateCounter > progressUpdateTime){
+                cout << "\rProgress: " << t/tMax * 100 << " %      " << std::flush;
+                progressUpdateCounter = 0;
+            }
+        } else {
+            cout << "\rProgress: " << 100 << " %      " << std::endl;
+        }
+    }
+
+
+    // evolve materials
+    evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'x');
+    evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'y');
+
+
+    //caching values for tabulated EoS
+
+
+    //source term evolution
+
+
+    //recording materials
+    recorderPtr->update(dt, t, step, u);
+
+}
+
+void Simulation::forceRecordAll(){
+    recorderPtr->record(t, step, u);
+}
+
+void Simulation::exportAll(string resultsFolder){
+    recorderPtr->exportData(exporter, mesh, sysPtr, resultsFolder);
+}
+
+
+
+// INFORMATION AND DEBUGGING ======
+
+void Simulation::inform(){
+    int colwidth = 30;
+    cout << "\n-------------" << endl;
+
+    //descriptors for the system
+    string sys = sysPtr->getSysName();
+
+    //outputting descrip
+    cout << "This is a " << sys << " simulation." << endl;
+
+    if (doDC){
+        cout << "\n Divergence Cleaning is enabled. \n " << endl;
+    }
+
+    cout << "- " << endl;
+    cout << left << setw(colwidth) << "EoS Type: " << sysPtr->getEoSPtr()->getEoSType() << endl;
+    cout << left << setw(colwidth) << "EvolverType: " << evolverPtr->getEvolverType() << endl;
+    cout << left << setw(colwidth) << "Recording time delay: " << recorderPtr->getDelayTime() << "s" << endl;
+    cout << "------------- " << endl;
+
+    cout << "Mesh and time limits:" << endl;
+
+    cout << left << setw(colwidth) << "nCellsX: " << mesh.nCellsX << ", nCellsY: " << mesh.nCellsY << endl;
+    cout << left << setw(colwidth) << "dx: " << mesh.dx << ", dy: " << mesh.dy << endl;     
+    cout << left << setw(colwidth) << "tMax: " << tMax << endl;
+
+    cout << "------------- \n" << endl;
+}
+
+void Simulation::enableProgressUpdate(double updatePercentage){
+    giveProgressUpdate = true;
+    progressUpdateTime = tMax * updatePercentage;
+}
+
+void Simulation::informFinished(){
+    if (giveProgressUpdate){
+        cout << "\rProgress: 100 %               " << std::flush;
+    }
+
+    cout << "\n\nSimulation complete." << endl;
+    //could add exporting here
+}
+
+
+
+// CONTROL ======
+
+void Simulation::setDoDC(bool inputDoDC){
+    doDC = inputDoDC;
+    evolverPtr->setDoDC(inputDoDC);
+}
+
+bool Simulation::getDoDC(){
+    return doDC;
+}

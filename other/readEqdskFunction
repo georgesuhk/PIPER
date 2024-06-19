@@ -1,0 +1,377 @@
+
+void GSsolver::readEQDSK(CellArray& UBoundary, LevelSet& LS , int nmat, CAMReX* AMRLevel)
+{
+
+		std::ifstream readfile (m_EqdskFile);
+
+		std::string line, header ;
+
+		int nx,ny, idum;
+
+		Real rdim, zdim, rcentr, rleft, zmid, rmaxis, zmaxis, psimag, psibry, bcentr, current, xdum ;
+
+		readfile >> header ;    // FIle has specific format, refer to documentation provided for EQDSK files
+
+		readfile >> idum >> nx >> ny ;
+
+		Vector<Vector<Real>> psirz(ny, Vector<Real> (nx)), psinormdat(ny, Vector<Real> (nx)) ;
+
+		Vector<Vector<Real>> pgas(ny, Vector<Real> (nx)) ;
+		Vector<Vector<Real>> qsafety(ny, Vector<Real> (nx)) ;
+		Vector<Vector<Vector<Real>>> Bfield (ny, Vector<Vector<Real>> (nx, Vector<Real> (3))) ;
+
+		Vector<Real> fpol(nx), pres(nx), ffprime(nx), pprime(nx), qpsi(nx) ;
+
+		readfile >> rdim >> zdim >> rcentr >> rleft >> zmid ;
+		readfile >> rmaxis >> zmaxis >> psimag >> psibry >> bcentr ;
+		readfile >> current >> psimag >> xdum >> rmaxis >> xdum ;
+		readfile >> zmaxis >> xdum >> psibry >> xdum >> xdum ;
+
+
+		for(int i = 0 ; i < nx ; i++)
+		{
+			readfile >> fpol[i] ;
+		}
+		for(int i = 0 ; i < nx ; i++)
+		{
+			readfile >> pres[i] ;
+		}
+		for(int i = 0 ; i < nx ; i++)
+		{
+			readfile >> ffprime[i] ;
+		}
+		for(int i = 0 ; i < nx ; i++)
+		{
+			readfile >> pprime[i] ;
+		}
+
+		for(int j = 0 ; j < ny ; j ++)
+		{
+			for(int i = 0 ; i < nx ; i++)
+			{
+				readfile >> psirz[j][i] ;
+			}
+		}
+
+		for(int i = 0 ; i < nx ; i++)
+		{
+			readfile >> qpsi[i] ;
+		}
+
+
+		readfile.close();
+		Print() << " Done read for eqdsk in " << " on level " << m_levelNum << std::endl;
+
+		for(int j = 0 ; j < ny ; j ++)
+		{
+			for(int i = 0 ; i < nx ; i++)
+			{
+				psinormdat[j][i] = (psimag - psirz[j][i]) / (psimag - psibry) ;
+			}
+		}
+
+
+		ParmParse pps("sim");
+		pps.query("plotGSforEQDSK",m_plotGSquantitiesForEqdsk);
+
+		if(m_plotGSquantitiesForEqdsk)
+		{
+				plotGSforEQDSK(fpol,pres,ffprime,pprime,qpsi,psirz,psinormdat,nx,ny,rleft,rdim,zdim,zmid) ;
+		}
+
+
+    // Real Bnorm = 1.0, pnorm = 4.0*acos(-1.0)*1.e-7, p0 = 0.1 ;
+		Real Bnorm = 2.820948, pnorm = 1.e-5, p0 = 0.1 ;
+    
+		int ncomp = UBoundary.getMultiFab().nComp() ;
+
+		double dxeq = rdim / nx ;
+		double dyeq = zdim / ny ;
+
+		// Want to make contour of psi boundary ..
+
+		// Vector<Real> R_1D(nx, 0.0) ;
+		// Vector<Real> Z_1D(ny, 0.0) ;
+		//
+		// matplot::vector_1d levels = {psibry} ;
+		// matplot::vector_2d data(ny, matplot::vector_1d(nx, 0.0));
+		//
+		// for(int j = 0 ; j < ny ; j ++)
+		// {
+		// 	Real y = (-0.5*zdim + zmid) + (Real(j))*dyeq ;
+		// 	for(int i = 0 ; i < nx ; i++)
+		// 	{
+		// 		Real x = rleft + (Real(i))*dxeq ;
+		// 		if(j == 0)
+		// 		{
+		// 			R_1D[i] = x ;
+		// 		}
+		// 		data[j][i] = psirz[j][i] ;
+		// 	}
+		// 	Z_1D[j] = y ;
+		// }
+		//
+		// auto [RGrid, ZGrid] = matplot::meshgrid(R_1D, Z_1D);
+		//
+		// ContourData lines = matplot::contourc(RGrid, ZGrid, data, levels);
+		//
+		// for (int i = lines[0].first.size()-1; i >= 0; i--)
+		// {
+		// 	if(lines[0].first[i] != lines[0].first[i] || lines[0].second[i] != lines[0].second[i])
+		// 	{
+		// 		continue ;
+		// 	}
+		// 	if(i%5 == 0)
+		// 	{
+		// 		m_contourForLS.push_back({lines[0].first[i],lines[0].second[i]});
+		// 	}
+		// }
+
+
+    Real g0 = bcentr*rcentr ;
+
+		Real dpsidx, dpsidy ;
+    
+		for(int j = 0 ; j < ny ; j ++)
+		{
+			for(int i = 0 ; i < nx ; i++)
+			{
+
+				Real R = rleft + (i+0.5)*dxeq ;
+
+        Real pointNorm = psinormdat[j][i] * (nx-1) ; 
+        
+				int inorm = int(psinormdat[j][i] * (nx-1)) ;
+				int inormPl = inorm + 1 ;
+
+        pointNorm -= Real(inorm) ; 
+        
+				if (inorm < 0 || inorm > nx-2)
+				{
+					inorm = nx-1;
+          inormPl = nx-1 ; 
+          pointNorm = 0.0 ; 
+				}
+        
+        pointNorm = std::max(0.0,pointNorm) ; 
+        pointNorm = std::min(1.0,pointNorm) ; 
+
+				qsafety[j][i] = ((1.0-pointNorm)*qpsi[inorm] + pointNorm*qpsi[inormPl]) ;
+
+				pgas[j][i] = ((1.0-pointNorm)*pres[inorm] + pointNorm*pres[inormPl])*pnorm + p0;
+
+				Real fpoloidal = ((1.0-pointNorm)*fpol[inorm] + pointNorm*fpol[inormPl]) ;
+
+				if(i == 0)
+				{
+					dpsidx = 1.0/(12.0*dxeq)*(-25.0*psirz[j][i] +48.0*psirz[j][i+1] -36.0*psirz[j][i+2] + 16.0*psirz[j][i+3]- 3.0*psirz[j][i+4]) ;
+				}
+				else if(i == 1)
+				{
+					dpsidx = 1.0/(12.0*dxeq)*(-3.0*psirz[j][i-1] - 10.0*psirz[j][i] + 18.0*psirz[j][i+1] - 6.0*psirz[j][i+2] + 1.0*psirz[j][i+3]) ;
+				}
+				else if(i == nx-1)
+				{
+					dpsidx = 1.0/(12.0*dxeq)*(25.0*psirz[j][i] - 48.0*psirz[j][i-1] + 36.0*psirz[j][i-2] - 16.0*psirz[j][i-3] + 3.0*psirz[j][i-4]) ;
+				}
+				else if(i == nx-2)
+				{
+					dpsidx = 1.0/(12.0*dxeq)*(3.0*psirz[j][i+1] + 10.0*psirz[j][i] - 18.0*psirz[j][i-1] + 6.0*psirz[j][i-2] - 1.0*psirz[j][i-3]) ;
+				}
+				else
+				{
+					dpsidx = 1.0/(12.0*dxeq)*(-1.0*psirz[j][i+2] +8.0*psirz[j][i+1] -8.0*psirz[j][i-1] +1.0*psirz[j][i-2]) ;
+				}
+
+				if(j == 0)
+				{
+					dpsidy = 1.0/(12.0*dyeq)*(-25.0*psirz[j][i] +48.0*psirz[j+1][i] -36.0*psirz[j+2][i] + 16.0*psirz[j+3][i]- 3.0*psirz[j+4][i]) ;
+				}
+				else if(j == 1)
+				{
+					dpsidy = 1.0/(12.0*dyeq)*(-3.0*psirz[j-1][i] - 10.0*psirz[j][i] + 18.0*psirz[j+1][i] - 6.0*psirz[j+2][i] + 1.0*psirz[j+3][i]) ;
+				}
+				else if(j == ny-1)
+				{
+					dpsidy = 1.0/(12.0*dyeq)*(25.0*psirz[j][i] - 48.0*psirz[j-1][i] + 36.0*psirz[j-2][i] - 16.0*psirz[j-3][i] + 3.0*psirz[j-4][i]) ;
+				}
+				else if(j == ny-2)
+				{
+					dpsidy = 1.0/(12.0*dyeq)*(3.0*psirz[j+1][i] + 10.0*psirz[j][i] - 18.0*psirz[j-1][i] + 6.0*psirz[j-2][i] - 1.0*psirz[j-3][i]) ;
+				}
+				else
+				{
+					dpsidy = 1.0/(12.0*dyeq)*(-1.0*psirz[j+2][i] +8.0*psirz[j+1][i] -8.0*psirz[j-1][i] +1.0*psirz[j-2][i]) ;
+				}
+
+				Bfield[j][i][0] =  -1.0/R*dpsidy *Bnorm ;
+				Bfield[j][i][1] =   1.0/R*dpsidx *Bnorm ;
+				Bfield[j][i][2] =   fpoloidal/R  *Bnorm ;
+
+
+			}
+		}
+
+
+    Print() << " Interpolating from EQDSK grid to simulation grid : " << std::endl;
+
+		UBoundary.getMultiFab().setVal(0.0) ;
+
+		Vector<Real> dxForFace(3, 0.0) ;
+
+		Vector<Vector<Real>> interpolationValues(4,Vector<Real>(4,0.0)) ;
+
+		for(MFIter mfi(UBoundary.getMultiFab()); mfi.isValid(); ++mfi)   // Interpolate to simulation domain and dimension
+		{
+
+			const Box& bx = mfi.validbox();
+
+			const auto lo = lbound(bx);
+			const auto hi = ubound(bx);
+			const Real* dx = m_geom.CellSize();
+
+	    BoxAccessCellArray U(mfi,bx,UBoundary);
+
+			for(int n = 0; n < AMREX_SPACEDIM; ++n)
+	    {
+	      if(U.getBox().ixType()[n] == 1 )
+	      {
+	        dxForFace[n] = 0.5*dx[n] ;
+	      }
+	    }
+
+			BoxAccessLevelSet  bals(mfi,bx,LS);
+
+			for(int k = lo.z; k <= hi.z; ++k)
+			{
+			  for(int j = lo.y; j <= hi.y; ++j)
+			  {
+					for(int i = lo.x; i <= hi.x; ++i)
+					{
+
+							Real x = m_geom.ProbLo()[0] + (Real(i)+0.5)*dx[0] -dxForFace[0];
+							Real y = m_geom.ProbLo()[1] + (Real(j)+0.5)*dx[1] -dxForFace[1];
+							Real z = m_geom.ProbLo()[2] + (Real(k)+0.5)*dx[2] -dxForFace[2];
+
+							Real r =  fabs(x) ;
+
+							if(AMREX_SPACEDIM == 3)
+							{
+								r = sqrt(x*x + z*z) ;
+							}
+
+							int GSi = int ( (r - rleft )/dxeq -0.5);      // 0.125 is the dx of the divertor file resolution
+							int GSj = int ( (y - (-0.5*zdim + zmid) )/dyeq -0.5);
+
+							if(GSj >= ny - 3 || GSi >= nx - 3 || GSj < 2 || GSi < 2)
+							{
+								U(i,j,k,0) = 1.0  ;
+								U(i,j,k,7) = p0/(5.0/3.0 -1.0) ;
+								continue;
+							}
+
+							Real x1 = rleft + (Real(GSi)+0.5)*dxeq ;
+							Real y1 = (-0.5*zdim + zmid) + (Real(GSj)+0.5)*dyeq ;
+							Real x2 = x1 + dxeq;
+							Real y2 = y1 + dyeq;
+
+							for(int xdim = 0 ; xdim < 4 ; xdim ++)
+							{
+								for(int ydim = 0 ; ydim < 4 ; ydim ++)
+								{
+									interpolationValues[xdim][ydim] = pgas[GSj-1+ydim][GSi-1+xdim] ;
+								}
+							}
+
+	            Real pgasInterp = interpolateCubic2D({r,y},interpolationValues,{{x1,x2},{y1,y2}},{dxeq,dyeq}) ;
+
+							Real rmin = sqrt((r-3.55)*(r-3.55) + y*y) ;
+							// pgasInterp = 0.1 + exp(-(rmin*rmin)/0.8) ;
+
+							for(int xdim = 0 ; xdim < 4 ; xdim ++)
+							{
+								for(int ydim = 0 ; ydim < 4 ; ydim ++)
+								{
+									interpolationValues[xdim][ydim] = qsafety[GSj-1+ydim][GSi-1+xdim] ;
+								}
+							}
+
+							Real qInterp = interpolateCubic2D({r,y},interpolationValues,{{x1,x2},{y1,y2}},{dxeq,dyeq}) ;
+
+							for(int xdim = 0 ; xdim < 4 ; xdim ++)
+							{
+								for(int ydim = 0 ; ydim < 4 ; ydim ++)
+								{
+									interpolationValues[xdim][ydim] = psirz[GSj-1+ydim][GSi-1+xdim] ;
+								}
+							}
+
+							Real psiInterp = interpolateCubic2D({r,y},interpolationValues,{{x1,x2},{y1,y2}},{dxeq,dyeq}) ;
+
+							for (size_t n = 0; n < 3; n++)
+							{
+
+								for(int xdim = 0 ; xdim < 4 ; xdim ++)
+								{
+									for(int ydim = 0 ; ydim < 4 ; ydim ++)
+									{
+										interpolationValues[xdim][ydim] = Bfield[GSj-1+ydim][GSi-1+xdim][n] ;
+									}
+								}
+
+								Real Binterp = interpolateCubic2D({r,y},interpolationValues,{{x1,x2},{y1,y2}},{dxeq,dyeq}) ;
+
+								U(i,j,k,4+n) =  Binterp ;
+							}
+
+							Real BEn = 0.5*(U(i,j,k,4)*U(i,j,k,4) + U(i,j,k,5)*U(i,j,k,5) + U(i,j,k,6)*U(i,j,k,6)) ;
+
+							U(i,j,k,7) = pgasInterp/(5.0/3.0 -1.0) + BEn ;
+
+							// U(i,j,k,0) = pgasInterp < 0.115 ? 0.1 : 1.0 ;
+							U(i,j,k,0) = 1.0 ;
+
+							U(i,j,k,9) = qInterp ;
+
+							U(i,j,k,9) = psiInterp ;
+
+							if(amrex::SpaceDim == 3)
+							{
+
+								Real Br = U(i,j,k,4) ;
+								Real Btor = U(i,j,k,6) ;
+								Real Bz = U(i,j,k,5) ;
+
+								U(i,j,k,4) = Br * x/r  - Btor * z/r ;
+								U(i,j,k,5) = Bz ;
+								U(i,j,k,6) = Br * z/r  + Btor * x/r ;
+							}
+							else
+							{
+								U(i,j,k,4) *= x/fabs(x) ;
+								U(i,j,k,6) *= x/fabs(x) ;
+							}
+
+					}
+				}
+			}
+		}
+		UBoundary.getMultiFab().FillBoundary();
+
+		// Put here the contour determination for psi
+
+		Print() << " Finished Read EQDSK in " << std::endl;
+
+
+		// std::ofstream outfile ("./ST40/CMB18PpFpProfiles");
+		//
+		// for(int i = 0 ; i < nx ; i++)
+		// {
+		// 	outfile << std::scientific << pprime[i] << "  " << ffprime[i]/fpol[i] << " \n "  ;
+		// }
+		// outfile.close() ;
+
+
+
+}
+

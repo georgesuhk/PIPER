@@ -1,0 +1,6 @@
+output/
+obj/*
+build/
+bin/
+EoSData/
+Mutationpp/
