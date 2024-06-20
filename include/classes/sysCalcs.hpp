@@ -49,6 +49,9 @@ class SysCalcs {
         /* returns bulk flow kinetic energy*/
         double get_KE(CellVec& u);
 
+        /* returns the resistivity */
+        double get_Resis(CellVec& u, int i, int j, bool interp = true);
+
         /* converts CellVec from conservative form to primitive form */
         virtual CellVec conservToPrim(CellVec& u) = 0;
 

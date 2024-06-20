@@ -2,8 +2,8 @@
 #define SETTINGS_HPP
 
 #include "constants.hpp"
-#include "modules.hpp"
 #include "typedefs.hpp"
+#include "modules.hpp"
 
 //file that collects together other setting files
 

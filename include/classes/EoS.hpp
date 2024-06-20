@@ -36,6 +36,11 @@ class EoS {
     
     protected:
         string EoSType;
+
+        // Caching ------
+        Scalar2D resis_Cache;
+        Scalar2D p_Cache;
+
     };
 
 // Ideal EoS
@@ -57,8 +62,11 @@ class IdealEoS : public EoS {
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
-        /* returns resistivity*/
+        /* returns resistivity */
         virtual double get_Resis(int& i, int& j) override;
+
+        /* interps resistivity (same exact function as get_Resis() for IdealEoS)*/
+        virtual double interp_Resis(double& rho, double& p) override;
 
         double get_gamma();
 
@@ -123,11 +131,7 @@ class TabEoS : public EoS{
         Scalar2D elecConduct_Table;
         Scalar2D thermConduct_Table;
 
-        // Caching
-        Scalar2D resis_Cache;
-
         // Control variables
-        bool cached = false;
         array<int,2> activeRhoIndices;
         array<int,2> activePIndices;
 

@@ -109,20 +109,46 @@ void Simulation::evolve(){
     }
 
 
-    // evolve materials
+    // EVOLVE MATERIALS - Strang Splitting ======
+
+    /* source term evolution - S^(t/2) */
+    if (doSourceUpdate){
+        sourceUpdates(dt/2);
+    }
+
+    /* conservative update - C^(t)*/
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'x');
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'y');
 
+    /* source term evolution - S^(t/2) */
+    if (doSourceUpdate){
+        sourceUpdates(dt/2);
+    }
 
-    //caching values for tabulated EoS
 
-
-    //source term evolution
-
-
-    //recording materials
+    // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
+}
 
+void Simulation::sourceUpdates(double dt){
+
+    // implicit source update time step
+    double source_dt_imp = dt / source_time_ratio;
+
+    // how many times the update has been applied
+    double sourceUpdateCounter = 0;
+
+    // diffusion BC
+    string diffBC = "Neumann";
+
+    while (sourceUpdateCounter < source_time_ratio){
+        sourceUpdateCounter += 1;
+
+        /* implicit updates */
+        for (implicitSource& source : implicitSources){
+            source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
+        }
+    }
 }
 
 void Simulation::forceRecordAll(){
@@ -182,7 +208,44 @@ void Simulation::informFinished(){
 
 
 
-// CONTROL ======
+
+
+// OTHER SYSTEMS ======
+
+// SOURCE UPDATE ------
+
+void Simulation::setDoSourceUpdate(bool inputDoSource){
+    doSourceUpdate = inputDoSource;
+
+    if (doSourceUpdate){
+        cout << "\n" << endl;
+        cout << "Source step updates enabled. With time step ratio: " << source_time_ratio << endl;
+        cout << "\n" << endl;
+    }
+}
+
+bool Simulation::getDoSourceUpdate(){
+    return doSourceUpdate;
+}
+
+void Simulation::setSourceTimeRatio(int inputSourceRatio){
+    source_time_ratio = inputSourceRatio;
+}
+
+int Simulation::getSourceTimeRatio(){
+    return source_time_ratio;
+}
+
+void Simulation::setImplicitSources(vector<implicitSource> inputSources){
+    implicitSources = inputSources;
+}
+
+vector<implicitSource>& Simulation::getImplicitSources(){
+    return implicitSources;
+}
+
+
+// DIVERGENCE CLEANING ------
 
 void Simulation::setDoDC(bool inputDoDC){
     doDC = inputDoDC;
@@ -192,3 +255,4 @@ void Simulation::setDoDC(bool inputDoDC){
 bool Simulation::getDoDC(){
     return doDC;
 }
+

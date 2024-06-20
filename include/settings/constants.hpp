@@ -1,7 +1,9 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-//constants (maybe should take to another file)
+#include "modules.hpp"
+
+// constants
 const double pAtmos = 101325.0;
 const double myPI = 3.14159265358979323846;
 const double kB = 1.38e-23;
@@ -14,10 +16,17 @@ const double electronMass = 9.109e-31;
 const double protonMass = 1.6726e-27;
 const double vacPermeab = 1.2566e-6;
 
-//material properties
+// material properties
 const double airParticleMass = 4.81e-26;
 const double hydrogenMass = 1.00784 * dalton;
 const double H_ionize_energy = 13.6 * elementaryCharge;
+
+// scaling coefficients
+
+/* scaling factor for Amps and seconds (due to scaling for p and B) -> to put system in atms for p and B/sqrt(u0) for B */
+const double resisScaling = 1 / (vacPermeab * sqrt(pAtmos));
+
+
 
 
 #endif

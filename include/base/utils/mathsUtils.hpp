@@ -33,7 +33,7 @@ array<double,2> getTangVec(array<double, 2> normVec);
 double distanceToLine(double x, double y, double diagOffset);
 
 /* Thomas algorithm, used to solve tridiagonal matrices*/
-vector<double> thomasAlgo(Mesh2D& mesh, vector<double> diagArray, vector<double> offArray_l, vector<double> offArray_r, vector<double> rhsArray, char axis);
+vector<double> thomasAlgo(Mesh2D& mesh, vector<double> A_diag, vector<double> A_offdiag_l, vector<double> A_offdiag_r, vector<double> Bvector, char axis);
 
 
 

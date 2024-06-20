@@ -40,6 +40,10 @@ double IdealEoS::get_Resis(int& i, int& j){
     return constResis;
 };
 
+double IdealEoS::interp_Resis(double& rho, double& p){
+    return constResis;
+}
+
 void IdealEoS::set_gamma(double inputGamma){
     gamma = inputGamma;
 };
@@ -108,7 +112,9 @@ double TabEoS::get_Cs(double& rho, double& p){
 }
 
 double TabEoS::get_Resis(int& i, int& j){
-    return 0;
+
+    // will also need to apply scaling here
+    return 0 * resisScaling;
 }
 
 double TabEoS::interp_Resis(double& rho, double& p){
@@ -122,10 +128,13 @@ double TabEoS::interp_Resis(double& rho, double& p){
     double rho_higher = densities[rho_lower_idx + 1];
 
     double elecConduct = bilinearInterp(elecConduct_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
-    return 1/elecConduct;
+    return 1/elecConduct * resisScaling;
+
 }
 
 void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder, char delimiter){
+    cout << "Loading in TabEoS data from: " << dataFolder << endl;
+
     Scalar2D tabularData;
     resis_Cache = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
 
@@ -162,4 +171,5 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
     activeRhoIndices = {0, int(densities.size())-1};
     activePIndices = {0, int(pressures.size())-1};
 
+    cout << "TabEoS Loaded. \n" << endl;
 }

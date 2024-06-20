@@ -33,6 +33,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include/base/utils)
 include_directories(${PROJECT_SOURCE_DIR}/include/base/init)
 include_directories(${PROJECT_SOURCE_DIR}/include/settings)
 include_directories(${PROJECT_SOURCE_DIR}/include/classes)
+include_directories(${PROJECT_SOURCE_DIR}/include/classes/source)
+
 
 
 #making libraries ---------------------------------------------------

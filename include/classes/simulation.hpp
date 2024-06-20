@@ -4,6 +4,7 @@
 #include "evolver.hpp"
 #include "recorders.hpp"
 #include "init.hpp"
+#include "sourceUpdates.hpp"
 
 class Simulation {
     public:
@@ -68,8 +69,11 @@ class Simulation {
         /* returns the minimum dt across all the evolvers in the simulation */
         double get_min_dt();
 
-        /* evolvers all the TopVec in the simulation */
+        /* applies conservative evolution to all cells in the simulation */
         void evolve();
+
+        /* applies source terms evolution to all cells in the simulation */
+        void sourceUpdates(double dt);
 
         /**
          * forces all the recorders to take a snapshot of the system at the current time step
@@ -93,9 +97,25 @@ class Simulation {
         void informFinished();
 
 
-        // CONTROL ======
+        // OTHER SYSTEMS ======
+
+        // SOURCE UPDATE ------
 
         /* toggling source update */
+        void setDoSourceUpdate(bool inputDoSource);
+        bool getDoSourceUpdate();
+
+        /* setting the ratio been source update and conservative update */
+        /* default is 1:1 */
+        void setSourceTimeRatio(int inputSourceRatio);
+        int getSourceTimeRatio();
+
+        /* adding sources */
+        void setImplicitSources(vector<implicitSource> inputSources);
+        vector<implicitSource>& getImplicitSources();
+
+
+        // DIVERGENCE CLEANING ------
 
         /* toggling div clean */
         void setDoDC(bool inputDoDC);
@@ -117,6 +137,10 @@ class Simulation {
         // source term update ------
 
         bool doSourceUpdate = false;
+        int source_time_ratio = 1;
+
+        vector<implicitSource> implicitSources;
+        // vector<explicitSource> explicitSources;
         
 
         // control variables ------

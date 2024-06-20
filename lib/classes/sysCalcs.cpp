@@ -68,6 +68,24 @@ double SysCalcs::get_p(CellVec& u, bool interp){
     return EoSPtr->get_p(u[0], e, interp);
 };
 
+double SysCalcs::get_Resis(CellVec& u, int i, int j, bool interp){
+    double resis;
+    double rho = u[0];
+    double p = get_p(u);
+
+    if (interp){
+        // re-interprelating the resistivity for current cell
+        resis = EoSPtr->interp_Resis(rho, p);
+        
+    } else {
+        // accessing cached variable instead
+        resis = EoSPtr->get_Resis(i, j); 
+    }
+
+    return resis;
+}
+
+
 // operated on both prim and conserv ------
 
 double SysCalcs::get_MagE(CellVec& u){
@@ -75,6 +93,7 @@ double SysCalcs::get_MagE(CellVec& u){
     double BMag = getVectorMagnitude({u[5], u[6], u[7]});
     return 0.5 * pow(BMag, 2.0);
 };
+
 
 
 // Wave speed estimations ======

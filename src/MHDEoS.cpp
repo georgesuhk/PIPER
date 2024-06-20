@@ -4,7 +4,7 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion3_1/";
+string dataFolder = "./EoSData/HFusion3_3/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
@@ -15,7 +15,7 @@ double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 500, nCellsY = 2;
+int nCellsX = 400, nCellsY = 4;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.01;
 
@@ -24,11 +24,19 @@ int maxSteps = 10000;
 
 // initial conditions ------
 
-double rho_SF = 0.31;
+double rho_SF = 0.12;
 double p_SF = 100;
 vector<double> interfacePositions = {0.5};
 vector<CellVec> initCellVecs = BrioWuTestX_SI;
 
+// source terms ------
+bool doSourceUpdate = true;
+int sourceTimeRatio = 5;
+vector<implicitSource> implicitSources = {ohmic_diffusion};
+// double constResis = 1000.0;
+
+// divergence cleaning ------
+bool doDC = false;
 
 // evolver & BCs ------
 
@@ -45,12 +53,13 @@ int main(void){
 
     Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
-    // IdealEoS EoS1(gammaFac, mass);
+    // IdealEoS EoSIdeal(gammaFac, mass);
+    // EoSIdeal.set_constResis(constResis);
     // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
 
-    TabEoS EoS1;
-    EoS1.genFromData(mesh, {"pressure","density","temperature","Cs","e","elecCon","thermCon"}, dataFolder, ',');
-    shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoS1);
+    TabEoS EoSTab;
+    EoSTab.genFromData(mesh, {"pressure","density","temperature","Cs","e","elecCon","thermCon"}, dataFolder, ',');
+    shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
 
     FIPCalcs sysCalcs(EoSPtr);
     shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
@@ -61,6 +70,11 @@ int main(void){
     shared_ptr<Recorder> recorderPtr = make_shared<Recorder>(recorder);
 
     Simulation sim(uInit, evolverPtr, sysPtr, recorderPtr, BC, exporter, mesh, resultsFolder, tMax);
+    sim.setDoSourceUpdate(doSourceUpdate);
+    sim.setSourceTimeRatio(sourceTimeRatio);
+    sim.setImplicitSources(implicitSources);
+    sim.setDoDC(doDC);
+
     sim.forceRecordAll();
     sim.enableProgressUpdate(0.05);
     sim.inform();

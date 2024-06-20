@@ -130,11 +130,15 @@ double distanceToLine(double x, double y, double diagOffset){
 }
 
 /* Thomas algorithm for solving tridiagonal matrices */
-vector<double> thomasAlgo(Mesh2D& mesh, vector<double> diagArray, vector<double> offArray_l, vector<double> offArray_r, vector<double> rhsArray, char axis){
+vector<double> thomasAlgo(Mesh2D& mesh, vector<double> A_diag, vector<double> A_offdiag_l, vector<double> A_offdiag_r, vector<double> Bvector, char axis){
 
     //making all arrays the required lengths
-    offArray_r.push_back(0.0);
-    offArray_l.insert(offArray_l.begin(), 0.0);
+
+    /* the off diagonal axis right of the main diagonal */
+    A_offdiag_r.push_back(0.0);
+
+    /* the off diagonal axis left of the main diagonal */
+    A_offdiag_l.insert(A_offdiag_l.begin(), 0.0);
 
     vector<double> fArray = {0};
     vector<double> deltaArray = {0};
@@ -144,13 +148,15 @@ vector<double> thomasAlgo(Mesh2D& mesh, vector<double> diagArray, vector<double>
         nCells = mesh.nCellsX;
     } else if (axis == 'y'){
         nCells = mesh.nCellsY;
+    } else {
+        throw runtime_error("axis invalid in thomasAlgo()");
     }
 
     // forward elimination
     double f, delta;
     for (int i = 0; i < nCells; i++){
-        f = offArray_r[i] / (diagArray[i] - offArray_l[i] * fArray[i]);
-        delta = (rhsArray[i] - offArray_l[i] * deltaArray[i]) / (diagArray[i] - offArray_l[i] * fArray[i]);
+        f = A_offdiag_r[i] / (A_diag[i] - A_offdiag_l[i] * fArray[i]);
+        delta = (Bvector[i] - A_offdiag_l[i] * deltaArray[i]) / (A_diag[i] - A_offdiag_l[i] * fArray[i]);
 
         fArray.push_back(f);
         deltaArray.push_back(delta);
