@@ -43,8 +43,11 @@ class SysCalcs {
         /* returns internal energy */
         double get_e(CellVec& u);
 
-        /* returns pressure variables */ 
-        double get_p(CellVec& u, bool interp = false);
+        /* returns pressure through interpolation */ 
+        double get_p(CellVec& u);  
+
+        /* returns pressure via cached values */
+        double get_p(int i, int j);
 
         /* returns bulk flow kinetic energy*/
         double get_KE(CellVec& u);

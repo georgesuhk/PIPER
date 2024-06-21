@@ -13,7 +13,7 @@ void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double
 
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
-            resistivity = get_Resis(u[i][j], i, j, sysPtr, true);
+            resistivity = get_Resis(u[i][j], i, j, sysPtr, false);
 
             //induction eqn source terms
             laplacianBx = ( u[i+1][j][5] - 2*u[i][j][5] + u[i-1][j][5] )/(mesh.dx) + ( u[i][j+1][5] - 2*u[i][j][5] + u[i][j-1][5] )/(mesh.dy);
@@ -27,11 +27,12 @@ void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double
 
             //assembling
             S = resistivity * ( (laplacianBx*u[i][j][5] + laplacianBy*u[i][j][6]) + ( pow(dBz_dy, 2.0) + pow(dBz_dx, 2.0) + pow((dBy_dx - dBx_dy), 2.0) ) );
-            // u[i][j][4] = u[i][j][4] + S * dt;
+            u[i][j][4] = u[i][j][4] + S * dt;
 
         }
     }
 
     BCFunc(u, mesh, sysPtr);
+    sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
 }

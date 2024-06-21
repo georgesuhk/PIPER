@@ -43,7 +43,7 @@ double SysCalcs::get_T(CellVec& u){
 double SysCalcs::get_KE(CellVec& u){
 
     double rho = u[0];
-    double vx = u[0] / rho;
+    double vx = u[1] / rho;
     double vy = u[2] / rho;
     double vz = u[3] / rho;
 
@@ -62,11 +62,14 @@ double SysCalcs::get_e(CellVec& u){
     return (get_E(u) - get_KE(u)) / u[0];
 };
 
-double SysCalcs::get_p(CellVec& u, bool interp){
+double SysCalcs::get_p(CellVec& u){
     double e = get_e(u);
-
-    return EoSPtr->get_p(u[0], e, interp);
+    return EoSPtr->interp_p(u[0], e);
 };
+
+double SysCalcs::get_p(int i, int j){
+    return EoSPtr->get_p(i, j);
+}
 
 double SysCalcs::get_Resis(CellVec& u, int i, int j, bool interp){
     double resis;

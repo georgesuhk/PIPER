@@ -24,22 +24,38 @@ class EoS {
         virtual double get_T(double& rho, double& p) = 0;
 
         /* returns pressure */
-        virtual double get_p(double& rho, double& e, bool interp) = 0;
+        virtual double get_p(int& i, int& j) = 0;
 
+        virtual double interp_p(double& rho, double& e) = 0;
+ 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) = 0;
 
-        /* returns resistivity*/
+        /* returns resistivity */
         virtual double get_Resis(int& i, int& j) = 0;
+
+        /* interp resistivity */
         virtual double interp_Resis(double& rho, double& p);
+
+        // CACHING
+
+        /* caches all cached variables */
+        void cacheAll(Vec2D& u, Mesh2D& mesh);
+
+        /* caches pressure */
+        void cache_p(Vec2D& u, Mesh2D& mesh);
+
+        /* caches resistivity */
+        void cache_resis(Vec2D& u, Mesh2D& mesh);
 
     
     protected:
         string EoSType;
 
         // Caching ------
-        Scalar2D resis_Cache;
-        Scalar2D p_Cache;
+        Scalar2D e_cache;
+        Scalar2D p_cache;
+        Scalar2D resis_cache;
 
     };
 
@@ -50,6 +66,7 @@ class IdealEoS : public EoS {
         gamma(inputGamma), m(input_m){EoSType = "Ideal";};
 
         // GET FUNCTIONS ======
+
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) override;
 
@@ -57,7 +74,10 @@ class IdealEoS : public EoS {
         virtual double get_T(double& rho, double& p) override;
 
         /* returns pressure */
-        virtual double get_p(double& rho, double& e, bool interp) override;
+        virtual double get_p(int& i, int& j) override;
+
+        /* interps pressure */
+        virtual double interp_p(double& p, double& e) override;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
@@ -65,7 +85,7 @@ class IdealEoS : public EoS {
         /* returns resistivity */
         virtual double get_Resis(int& i, int& j) override;
 
-        /* interps resistivity (same exact function as get_Resis() for IdealEoS)*/
+        /* interps resistivity */
         virtual double interp_Resis(double& rho, double& p) override;
 
         double get_gamma();
@@ -101,13 +121,16 @@ class TabEoS : public EoS{
         virtual double get_T(double& rho, double& p) override;
 
         /* returns pressure */
-        virtual double get_p(double& rho, double& e, bool interp) override;
+        virtual double get_p(int& i, int& j) override;
+
+        /* interps p */
+        virtual double interp_p(double& rho, double& e) override;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
         /* returns resistivity*/
-        virtual double get_Resis(int& i, int& j) override; // note properly implemented yet
+        virtual double get_Resis(int& i, int& j) override;
 
         /* interpolates resistivity based on density and pressure */
         virtual double interp_Resis(double& rho, double& p) override;

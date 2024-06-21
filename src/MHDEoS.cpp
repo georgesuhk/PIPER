@@ -15,7 +15,7 @@ double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 400, nCellsY = 4;
+int nCellsX = 300, nCellsY = 4;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.01;
 
@@ -31,12 +31,12 @@ vector<CellVec> initCellVecs = BrioWuTestX_SI;
 
 // source terms ------
 bool doSourceUpdate = true;
-int sourceTimeRatio = 5;
+int sourceTimeRatio = 1;
 vector<implicitSource> implicitSources = {ohmic_diffusion};
-// double constResis = 1000.0;
+double constResis = 1000.0;
 
 // divergence cleaning ------
-bool doDC = false;
+bool doDC = true;
 
 // evolver & BCs ------
 

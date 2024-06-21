@@ -108,6 +108,8 @@ void Simulation::evolve(){
         }
     }
 
+    /* Caching */
+    sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
     // EVOLVE MATERIALS - Strang Splitting ======
 
@@ -118,13 +120,15 @@ void Simulation::evolve(){
 
     /* conservative update - C^(t)*/
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'x');
+    sysPtr->getEoSPtr()->cacheAll(u, mesh);
+
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'y');
+    sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
     /* source term evolution - S^(t/2) */
     if (doSourceUpdate){
         sourceUpdates(dt/2);
     }
-
 
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
