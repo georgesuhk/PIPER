@@ -21,6 +21,15 @@ const double airParticleMass = 4.81e-26;
 const double hydrogenMass = 1.00784 * dalton;
 const double H_ionize_energy = 13.6 * elementaryCharge;
 
+// coefficients
+const double sigma_coll_in = 5e-19;
+const double sigma_coll_en = 1e-19;
+
+/* coefficients from Braginskii 1965 */
+const double brag_a0 = 0.5063;
+// const double brag_a0 = 1;
+
+
 // scaling coefficients
 
 /* scaling factor for Amps and seconds (due to scaling for p and B) -> to put system in atms for p and B/sqrt(u0) for B */

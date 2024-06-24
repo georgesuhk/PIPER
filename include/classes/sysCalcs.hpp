@@ -3,6 +3,7 @@
 
 #include "settings.hpp"
 #include "EoS.hpp"
+#include "calcs.hpp"
 
 
 //base class for system calculations

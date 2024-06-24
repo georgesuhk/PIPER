@@ -12,6 +12,8 @@ double getTotalU(Vec2D& u, Mesh2D& mesh){
     return U;
 }
 
+
+
 // EXPORTERS ======
 void ExportFIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D mesh, shared_ptr<SysCalcs> sysPtr, string folder){
 
