@@ -28,9 +28,5 @@ vector<int> range(int start, int end, int gap);
 /* Similar to python np.linspace() */
 vector<double> linspace(double start, double end, int nPoints);
 
-/* generates a table (vector<vector<double>>) from csv data */
-vector<vector<double>> table_from_csv(string filename, char delimiter);
-
-
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "settings.hpp"
 #include "utils.hpp"
+#include "parse.hpp"
 
 
 // Base Class
@@ -112,7 +113,16 @@ class TabEoS : public EoS{
         int get_pLen();
 
         /* returns the length of the density idx */
-        int get_rhoLen();
+        int get_rhoLen();   
+
+        /* returns the entire pressures array */
+        Scalar1D& get_pressures();
+
+        /* returns the entire densities array */
+        Scalar1D& get_densities();
+
+        /* returns the entire temperatures table */
+        Scalar2D& get_T_Table();
 
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) override;
@@ -143,24 +153,28 @@ class TabEoS : public EoS{
 
 
     protected:
-        // array-like data
+        // array-like data ------
         Scalar1D densities;
         Scalar1D pressures;  
 
-        // tabular data
+        // tabular data ------
+
+        /* coefficients */
         Scalar2D e_Table;
         Scalar2D T_Table;
         Scalar2D Cs_Table;
-        Scalar2D elecConduct_Table;
+        Scalar2D resis_Table;
         Scalar2D thermConduct_Table;
 
-        // Control variables
+        /* species densities */
+        Scalar2D n_e_Table;
+        Scalar2D n_n_Table;
+        Scalar2D n_i_Table;
+
+
+        // Control variables ------
         array<int,2> activeRhoIndices;
         array<int,2> activePIndices;
-
-        
-
-
 };
 
 #endif

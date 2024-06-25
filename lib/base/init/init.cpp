@@ -38,9 +38,6 @@ Vec2D initPlanar(vector<CellVec> initCellVecs, vector<double> interfacePositions
     // apply boundary conditions
     BCFunc(uInit, mesh, sysPtr);
 
-    // cache variables
-    // sysPtr->getEoSPtr()->cacheAll(uInit, mesh);
-
     return uInit;
 }
 

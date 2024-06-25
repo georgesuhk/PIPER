@@ -1,8 +1,7 @@
 #ifndef CALCS_HPP
 #define CALCS_HPP
 
-#include "utils.hpp"
-
+#include "constants.hpp"
 // GENERAL CALCS ======
 
 /* returns temperature according to ideal gas equation */

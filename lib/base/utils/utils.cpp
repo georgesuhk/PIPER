@@ -138,29 +138,3 @@ vector<double> linspace(double start, double end, int nPoints){
     return output;
 }
 
-vector<vector<double>> table_from_csv(string filename, char delimiter){
-    vector<vector<double>> tabularData;
-    ifstream file(filename);
-
-    if (!file.is_open()) {
-        cerr << "Error opening file: " << filename << endl;
-    }
-
-    string line;
-    
-    while (getline(file, line)) {
-        vector<string> row;
-        stringstream ss(line);
-        string cell;
-
-        vector<double> innerVec;
-        while (getline(ss, cell, delimiter)) {
-            innerVec.push_back(stod(cell));
-        }
-        tabularData.push_back(innerVec);        
-    }
-
-    return tabularData;
-}
-
-

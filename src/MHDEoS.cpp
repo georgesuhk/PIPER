@@ -4,7 +4,7 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion3_3/";
+string dataFolder = "./EoSData/HFusion4_1/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
@@ -20,14 +20,14 @@ double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.01;
 
 double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF*pAtmos);
-int maxSteps = 10000;
+int maxSteps = 0;
 
 // initial conditions ------
 
-double rho_SF = 0.12;
-double p_SF = 100;
+double rho_SF = 1.0;
+double p_SF = 1.0;
 vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = BrioWuTestX_SI;
+vector<CellVec> initCellVecs = BrioWuTestX;
 
 // source terms ------
 bool doSourceUpdate = true;
@@ -58,7 +58,7 @@ int main(void){
     // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
 
     TabEoS EoSTab;
-    EoSTab.genFromData(mesh, {"pressure","density","temperature","Cs","e","elecCon","thermCon"}, dataFolder, ',');
+    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","resis","thermCon","n_e","n_n","n_i"}, dataFolder, ',');
     shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
 
     FIPCalcs sysCalcs(EoSPtr);

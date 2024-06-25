@@ -34,6 +34,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include/base/init)
 include_directories(${PROJECT_SOURCE_DIR}/include/settings)
 include_directories(${PROJECT_SOURCE_DIR}/include/classes)
 include_directories(${PROJECT_SOURCE_DIR}/include/classes/source)
+include_directories(${PROJECT_SOURCE_DIR}/include/other)
+
 
 
 
@@ -43,9 +45,13 @@ include_directories(${PROJECT_SOURCE_DIR}/include/classes/source)
 file (GLOB_RECURSE BASE_FILES ${PROJECT_SOURCE_DIR}/lib/base/*.cpp)
 add_library(baseLib OBJECT ${BASE_FILES})
 
-# classes ----
+# classes lib ----
 file (GLOB_RECURSE CLASSES ${PROJECT_SOURCE_DIR}/lib/classes/*.cpp)
 add_library(classesLib OBJECT ${CLASSES})
+
+# others lib ----
+file (GLOB_RECURSE OTHER_FILES ${PROJECT_SOURCE_DIR}/lib/other/*.cpp)
+add_library(otherLib OBJECT ${OTHER_FILES})
 
 # EXECUTABLES ------------------------------------------------------------
 
@@ -60,7 +66,7 @@ target_link_libraries(MHDEoS PUBLIC baseLib classesLib mutation++)
 # EoSConstruct
 add_executable(EoSConstruct ${PROJECT_SOURCE_DIR}/src/construct/EoSConstruct.cpp)
 set_target_properties(EoSConstruct PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
-target_link_libraries(EoSConstruct PUBLIC mutation++)
+target_link_libraries(EoSConstruct PUBLIC baseLib classesLib otherLib mutation++)
 
 # resisCompare
 add_executable(resisCompare ${PROJECT_SOURCE_DIR}/src/construct/resisCompare.cpp)

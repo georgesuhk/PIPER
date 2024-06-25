@@ -125,7 +125,17 @@ void IdealEoS::set_constResis(double inputResis){
 
 // TAB EOS ======
 
-// Internal solvers ------
+Scalar1D& TabEoS::get_pressures(){
+    return pressures;
+}
+
+Scalar1D& TabEoS::get_densities(){
+    return densities;
+}
+
+Scalar2D& TabEoS::get_T_Table(){
+    return T_Table;
+}
 
 int TabEoS::get_pLen(){
     return pressures.size();
@@ -198,8 +208,8 @@ double TabEoS::interp_Resis(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    double elecConduct = bilinearInterp(elecConduct_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
-    return 1/elecConduct * resisScaling;
+    double resis = bilinearInterp(resis_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    return resis;
 
 }
 
@@ -207,19 +217,18 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
     cout << "Loading in TabEoS data from: " << dataFolder << endl;
 
     Scalar2D tabularData;
-    resis_cache = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
 
     for (string& var : varList){
         string filename = dataFolder + var + ".csv";
-        tabularData = table_from_csv(filename, delimiter);
+        tabularData = easyParseTable(filename, delimiter);
 
         if (var == "pressure"){
             pressures = getColumnEoS(tabularData, 1);
         }
-        else if (var == "density"){
-            densities = tabularData[0];
+        else if (var == "densities"){
+            densities = tabularData[800];
         }
-        else if (var == "temperature"){
+        else if (var == "T"){
             T_Table = tabularData;
         }
         else if (var == "Cs"){
@@ -228,19 +237,29 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
         else if (var == "e"){
             e_Table = tabularData;
         }
-        else if (var == "elecCon"){
-            elecConduct_Table = tabularData;
+        else if (var == "resis"){
+            resis_Table = tabularData;
         }
         else if (var == "thermCon"){
             thermConduct_Table = tabularData;
         }
+        else if (var == "n_e"){
+            n_e_Table = tabularData;
+        }
+        else if (var == "n_n"){
+            n_n_Table = tabularData;
+        }
+        else if (var == "n_i"){
+            n_i_Table = tabularData;
+        }
         else {
-            cout << "Warning: Variable " << var << " is invalid.";
+            cout << "Warning: Variable " << var << " is invalid." << endl;
         }
     }
 
     activeRhoIndices = {0, int(densities.size())-1};
     activePIndices = {0, int(pressures.size())-1};
 
+    cout << "rho last: " << densities.back() << endl;
     cout << "TabEoS Loaded. \n" << endl;
 }

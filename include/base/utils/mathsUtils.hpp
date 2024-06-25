@@ -3,6 +3,7 @@
 
 #include "settings.hpp"
 #include "mesh.hpp"
+#include "calcs.hpp"
 
 extern const int cellVarsNums;
 // LINEAR ALGEBRA TOOLS ======
