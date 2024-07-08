@@ -132,26 +132,40 @@ void Simulation::evolve(){
 
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
+
+    cout << u[round(mesh.nCellsX/2)][2] << endl;
 }
 
 void Simulation::sourceUpdates(double dt){
 
     // implicit source update time step
     double source_dt_imp = dt / source_time_ratio;
+    double source_dt_ex = source_dt_imp / imp_ex_time_ratio;
 
-    // how many times the update has been applied
-    double sourceUpdateCounter = 0;
+    // how many times the implicit update has been applied
+    int impSourceUpdateCounter = 0;
+    int exSourceUpdateCounter = 0;
+    
 
     // diffusion BC
     string diffBC = "Neumann";
 
-    while (sourceUpdateCounter < source_time_ratio){
-        sourceUpdateCounter += 1;
+    while (impSourceUpdateCounter < source_time_ratio){
+        impSourceUpdateCounter += 1;
 
         /* implicit updates */
         for (implicitSource& source : implicitSources){
             source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
         }
+
+        /* explicit updates - can be multiple for each implicit update */
+        while (exSourceUpdateCounter < imp_ex_time_ratio){
+            exSourceUpdateCounter += 1;
+            for (SourceFuncEx& sourceFuncEx : explicitSourceFuncs){
+                explicitSolver(u, sysPtr, mesh, source_dt_ex, sourceFuncEx, BC);
+            }
+        }
+
     }
 }
 
@@ -236,13 +250,35 @@ void Simulation::setSourceTimeRatio(int inputSourceRatio){
     source_time_ratio = inputSourceRatio;
 }
 
+void Simulation::setSourceTimeRatio(int impSourceRatio, int exSourceRatio){
+    source_time_ratio = impSourceRatio;
+    imp_ex_time_ratio = exSourceRatio;
+}
+
 int Simulation::getSourceTimeRatio(){
+    return source_time_ratio;
+}
+
+void Simulation::setImpExTimeRatio(int inputTimeRatio){
+    imp_ex_time_ratio = inputTimeRatio;
+}
+
+int Simulation::getImpExTimeRatio(){
     return source_time_ratio;
 }
 
 void Simulation::setImplicitSources(vector<implicitSource> inputSources){
     implicitSources = inputSources;
 }
+
+void Simulation::setExplicitSourceFuncs(vector<SourceFuncEx> inputSources){
+    explicitSourceFuncs = inputSources;
+}
+
+void Simulation::setExplicitSolver(ExplicitSolver inputSolver){
+    explicitSolver = inputSolver;
+}
+
 
 vector<implicitSource>& Simulation::getImplicitSources(){
     return implicitSources;

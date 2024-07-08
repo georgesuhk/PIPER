@@ -56,7 +56,8 @@ int maxBetween(int a, int b);
 /* checks to see if 2 input float values are within a given tolerance */
 bool floatsAreClose(double a, double b, double tol);
 
-
+/* rounds a double to a desired number of decimal places dependent on roundFactor. i.e. roundFactor = 1e3 gives to 3 dp */
+double roundToPlace(double value, double roundFactor);
 
 // Advanced functions ------
 /* bilinear interpolation function */

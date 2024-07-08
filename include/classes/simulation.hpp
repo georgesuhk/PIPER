@@ -108,11 +108,30 @@ class Simulation {
         /* setting the ratio been source update and conservative update */
         /* default is 1:1 */
         void setSourceTimeRatio(int inputSourceRatio);
+
+        /* first input is the ratio between source update and conserv update, second input the ratio between
+        implicit and explicit update */
+        void setSourceTimeRatio(int impSourceRatio, int exSourceRatio);
+
         int getSourceTimeRatio();
 
-        /* adding sources */
+        /* setting the ratio been implicit update and explicit update */
+        /* default is 1:1 */
+        void setImpExTimeRatio(int inputTimeRatio);
+        int getImpExTimeRatio();
+
+
+        // ADDING SOURCES ------
+
+        /* adding implicit source updates */
         void setImplicitSources(vector<implicitSource> inputSources);
         vector<implicitSource>& getImplicitSources();
+
+        /* adding explicit source update functions */
+        void setExplicitSourceFuncs(vector<SourceFuncEx> inputSources);
+
+        /* sets which solver algorithm to use for the explicit solver */
+        void setExplicitSolver(ExplicitSolver inputSolver);
 
 
         // DIVERGENCE CLEANING ------
@@ -138,9 +157,12 @@ class Simulation {
 
         bool doSourceUpdate = false;
         int source_time_ratio = 1;
+        int imp_ex_time_ratio = 1;
 
         vector<implicitSource> implicitSources;
-        // vector<explicitSource> explicitSources;
+        vector<SourceFuncEx> explicitSourceFuncs;
+        ExplicitSolver explicitSolver = RK2;
+
         
 
         // control variables ------

@@ -79,7 +79,7 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
 
 // IDEAL GAS EOS ======
 
-double IdealEoS::get_gamma(){
+double IdealEoS::get_gamma(double& rho, double& p){
     return gamma;
 }
 
@@ -104,6 +104,18 @@ double IdealEoS::get_Cs(double& rho, double& p){
     return sqrt(gamma * p / rho);
 };
 
+double IdealEoS::interp_mass_frac_e(double& rho, double& p){
+    return mass_frac_e;
+};
+
+double IdealEoS::interp_mass_frac_n(double& rho, double& p){
+    return mass_frac_n;
+};
+
+double IdealEoS::interp_mass_frac_i(double& rho, double& p){
+    return mass_frac_i;
+};
+
 double IdealEoS::get_Resis(int& i, int& j){
     return constResis;
 };
@@ -120,7 +132,13 @@ void IdealEoS::set_constResis(double inputResis){
     constResis = inputResis;
 };
 
+void IdealEoS::set_mass_frac_n(double input_mass_frac){
+    mass_frac_n = input_mass_frac;
+};
 
+void IdealEoS::set_mass_frac_i(double input_mass_frac){
+    mass_frac_i = input_mass_frac;
+};
 
 
 // TAB EOS ======
@@ -168,6 +186,19 @@ double TabEoS::get_e(double& rho, double& p){
     return bilinearInterp(e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
+double TabEoS::get_gamma(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return bilinearInterp(gamma_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
 double TabEoS::get_T(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
@@ -194,6 +225,48 @@ double TabEoS::get_Cs(double& rho, double& p){
     return bilinearInterp(Cs_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
+double TabEoS::interp_mass_frac_e(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return bilinearInterp(mass_frac_e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+double TabEoS::interp_mass_frac_n(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return 0.5;
+    // return bilinearInterp(mass_frac_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+double TabEoS::interp_mass_frac_i(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return 0.5;
+    // return bilinearInterp(mass_frac_i_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+
 double TabEoS::get_Resis(int& i, int& j){
     return resis_cache[i][j];
 }
@@ -214,7 +287,7 @@ double TabEoS::interp_Resis(double& rho, double& p){
 }
 
 void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder, char delimiter){
-    cout << "Loading in TabEoS data from: " << dataFolder << endl;
+    cout << "\nLoading in TabEoS data from: " << dataFolder << endl;
 
     Scalar2D tabularData;
 
@@ -226,7 +299,7 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
             pressures = getColumnEoS(tabularData, 1);
         }
         else if (var == "densities"){
-            densities = tabularData[800];
+            densities = tabularData[0];
         }
         else if (var == "T"){
             T_Table = tabularData;
@@ -236,6 +309,9 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
         }
         else if (var == "e"){
             e_Table = tabularData;
+        }        
+        else if (var == "gamma"){
+            gamma_Table = tabularData;
         }
         else if (var == "resis"){
             resis_Table = tabularData;
@@ -243,14 +319,14 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
         else if (var == "thermCon"){
             thermConduct_Table = tabularData;
         }
-        else if (var == "n_e"){
-            n_e_Table = tabularData;
+        else if (var == "mass_frac_e"){
+            mass_frac_e_Table = tabularData;
         }
-        else if (var == "n_n"){
-            n_n_Table = tabularData;
+        else if (var == "mass_frac_n"){
+            mass_frac_n_Table = tabularData;
         }
-        else if (var == "n_i"){
-            n_i_Table = tabularData;
+        else if (var == "mass_frac_i"){
+            mass_frac_i_Table = tabularData;
         }
         else {
             cout << "Warning: Variable " << var << " is invalid." << endl;
@@ -260,6 +336,7 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
     activeRhoIndices = {0, int(densities.size())-1};
     activePIndices = {0, int(pressures.size())-1};
 
-    cout << "rho last: " << densities.back() << endl;
+    cout << "Density range: " << densities[0] << " to " << densities.back() << " [kg/m^3]" << endl;
+    cout << "Pressure range: " << pressures[0] << " to " << pressures.back() << " [atms]" << endl;
     cout << "TabEoS Loaded. \n" << endl;
 }

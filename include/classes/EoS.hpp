@@ -21,6 +21,8 @@ class EoS {
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) = 0;
 
+        virtual double get_gamma(double& rho, double& p) = 0;
+
         /* returns temperature */
         virtual double get_T(double& rho, double& p) = 0;
 
@@ -31,6 +33,15 @@ class EoS {
  
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) = 0;
+
+        /* returns n_e */
+        virtual double interp_mass_frac_e(double& rho, double& p) = 0;
+
+        /* returns n_n */
+        virtual double interp_mass_frac_n(double& rho, double& p) = 0;
+
+        /* returns n_i */
+        virtual double interp_mass_frac_i(double& rho, double& p) = 0;
 
         /* returns resistivity */
         virtual double get_Resis(int& i, int& j) = 0;
@@ -71,6 +82,9 @@ class IdealEoS : public EoS {
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) override;
 
+        /* returns adiabatic index / ratio of specific heats */
+        double get_gamma(double& rho, double& p) override;
+
         /* returns temperature */
         virtual double get_T(double& rho, double& p) override;
 
@@ -83,17 +97,26 @@ class IdealEoS : public EoS {
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
+        /* returns n_e */
+        virtual double interp_mass_frac_e(double& rho, double& p) override;
+
+        /* returns n_n */
+        virtual double interp_mass_frac_n(double& rho, double& p) override;
+
+        /* returns n_i */
+        virtual double interp_mass_frac_i(double& rho, double& p) override;
+
         /* returns resistivity */
         virtual double get_Resis(int& i, int& j) override;
 
         /* interps resistivity */
         virtual double interp_Resis(double& rho, double& p) override;
 
-        double get_gamma();
-
         // SETTING VARIABLES ======
         void set_gamma(double inputGamma);
         void set_constResis(double inputResis);
+        void set_mass_frac_n(double input_mass_frac);
+        void set_mass_frac_i(double input_mass_frac);
     
     protected:
         // adibatic index
@@ -102,6 +125,10 @@ class IdealEoS : public EoS {
         double m;
         // resistivity
         double constResis = 0;
+        // constant mass fracs
+        double mass_frac_e = 0;
+        double mass_frac_i = 1.0;
+        double mass_frac_n = 0.0;
     };
 
 class TabEoS : public EoS{
@@ -127,6 +154,9 @@ class TabEoS : public EoS{
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) override;
 
+        /* returns adiabatic index / ratio of specific heats */
+        double get_gamma(double& rho, double& p) override;
+
         /* returns temperature */
         virtual double get_T(double& rho, double& p) override;
 
@@ -139,8 +169,18 @@ class TabEoS : public EoS{
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
+        /* returns n_e */
+        virtual double interp_mass_frac_e(double& rho, double& p) override;
+
+        /* returns n_n */
+        virtual double interp_mass_frac_n(double& rho, double& p) override;
+
+        /* returns n_i */
+        virtual double interp_mass_frac_i(double& rho, double& p) override;
+
         /* returns resistivity*/
         virtual double get_Resis(int& i, int& j) override;
+
 
         /* interpolates resistivity based on density and pressure */
         virtual double interp_Resis(double& rho, double& p) override;
@@ -161,15 +201,16 @@ class TabEoS : public EoS{
 
         /* coefficients */
         Scalar2D e_Table;
+        Scalar2D gamma_Table;
         Scalar2D T_Table;
         Scalar2D Cs_Table;
         Scalar2D resis_Table;
         Scalar2D thermConduct_Table;
 
-        /* species densities */
-        Scalar2D n_e_Table;
-        Scalar2D n_n_Table;
-        Scalar2D n_i_Table;
+        /* species specific data */
+        Scalar2D mass_frac_e_Table;
+        Scalar2D mass_frac_n_Table;
+        Scalar2D mass_frac_i_Table;
 
 
         // Control variables ------

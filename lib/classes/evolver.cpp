@@ -21,6 +21,7 @@ void Evolver::updateCh(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh){
 
 double Evolver::getTimeStep(Mesh2D& mesh){
     double minCellGap = minBetween(mesh.dx, mesh.dy);
+    // cout << "ch: " << ch << endl;
     return Cnum * (minCellGap / ch);
 }
 

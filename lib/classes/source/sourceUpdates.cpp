@@ -2,9 +2,13 @@
 
 // IMPLICIT ======
 
-void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc){
-    CN_Diffusion_Solver(u, 5, get_Resis, sysPtr, mesh, dt, diffBCType, BCFunc);
-    CN_Diffusion_Solver(u, 6, get_Resis, sysPtr, mesh, dt, diffBCType, BCFunc);
+/**
+ * Ohmic diffusion source term + Joule heating
+ * Probs should split into 2 separate functions or at least make joule heating second order
+ */
+void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BC){
+    CN_Diffusion_Solver(u, 5, get_Resis, sysPtr, mesh, dt, diffBCType, BC);
+    CN_Diffusion_Solver(u, 6, get_Resis, sysPtr, mesh, dt, diffBCType, BC);
 
     //updating total energy
     double resistivity, laplacianBx, laplacianBy;
@@ -32,7 +36,6 @@ void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double
         }
     }
 
-    BCFunc(u, mesh, sysPtr);
+    BC(u, mesh, sysPtr);
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
-
 }

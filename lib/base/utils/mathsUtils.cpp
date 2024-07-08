@@ -244,6 +244,10 @@ bool floatsAreClose(double a, double b, double tol){
     return fabs(a - b) <= tol;
 }
 
+double roundToPlace(double value, double roundFactor){
+    return round(value * roundFactor)/roundFactor;
+}
+
 
 
 // advanced functions ------

@@ -9,7 +9,6 @@ Vec2D getFluxLF(Vec2D& u, shared_ptr<SysCalcs> sysPtr, const Mesh2D& mesh, doubl
         for (int i = 1; i < mesh.nCellsX+2; i++){
             for (int j = 1; j < mesh.nCellsY+2; j++){
                 for (int var = 0; var < (cellVarsNums); var++){
-                    cout << "var: " << var << endl; 
                     flux[i][j][var] = 0.5 * (mesh.dx/dt) * (u[i-1][j][var] - u[i][j][var]) + 0.5 * ( sysPtr->f(u[i][j])[var] + sysPtr->f(u[i-1][j])[var] );
                 }
             }

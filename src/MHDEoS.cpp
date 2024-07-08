@@ -4,39 +4,48 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_1/";
+string dataFolder = "./EoSData/HFusion4_2/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
 
-const int cellVarsNums = 9;
+const int cellVarsNums = 12;
+// const int cellVarsNums = 9;
+
 double gammaFac = 5.0/3.0;
 double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 300, nCellsY = 4;
+int nCellsX = 200, nCellsY = 4;
 double xMin = 0, xMax = 1;
-double yMin = 0, yMax = 0.01;
+double yMin = 0, yMax = 0.1;
 
-double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF*pAtmos);
-int maxSteps = 0;
+double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF);
+int maxSteps = 100000;
 
 // initial conditions ------
 
-double rho_SF = 1.0;
-double p_SF = 1.0;
+double rho_SF = 0.05;
+double p_SF = 100.0;
 vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = BrioWuTestX;
+vector<CellVec> initCellVecs = BrioWuPIP;
 
 // source terms ------
-bool doSourceUpdate = true;
+bool doSourceUpdate = false;
 int sourceTimeRatio = 1;
+int impExRatio = 1;
 vector<implicitSource> implicitSources = {ohmic_diffusion};
-double constResis = 1000.0;
+// vector<implicitSource> implicitSources = {};
+vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+
+// EoS ------
+double constResis = 1.0;
+double mass_frac_n = 0.2;
+double mass_frac_i = 1.0 - mass_frac_n;
 
 // divergence cleaning ------
-bool doDC = true;
+bool doDC = false;
 
 // evolver & BCs ------
 
@@ -45,24 +54,29 @@ SLICEvolver evolver(BC);
 shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 
 // recorder and exporter ------
-double recordingDelayTime = (tMax-tMin)/0.1;
-Exporter exporter = ExportFIP;
+double recordingDelayTime = (tMax-tMin)/10;
+Exporter exporter = ExportPIP;
 
 int main(void){
     // SET UP ======
 
     Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
-    // IdealEoS EoSIdeal(gammaFac, mass);
-    // EoSIdeal.set_constResis(constResis);
-    // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
+    IdealEoS EoSIdeal(gammaFac, mass);
+    EoSIdeal.set_constResis(constResis);
+    EoSIdeal.set_mass_frac_n(mass_frac_n);
+    EoSIdeal.set_mass_frac_i(mass_frac_i);
+    shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
 
-    TabEoS EoSTab;
-    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","resis","thermCon","n_e","n_n","n_i"}, dataFolder, ',');
-    shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
+    // TabEoS EoSTab;
+    // EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","gamma","resis","thermCon","mass_frac_e","mass_frac_n","mass_frac_i"}, dataFolder, ',');
+    // shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
 
-    FIPCalcs sysCalcs(EoSPtr);
-    shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
+    PIP0_Calcs sysCalcs(EoSPtr);
+    shared_ptr<SysCalcs> sysPtr = make_shared<PIP0_Calcs>(sysCalcs);
+
+    // FIPCalcs sysCalcs(EoSPtr);
+    // shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
 
     Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
     Recorder recorder;
@@ -71,8 +85,9 @@ int main(void){
 
     Simulation sim(uInit, evolverPtr, sysPtr, recorderPtr, BC, exporter, mesh, resultsFolder, tMax);
     sim.setDoSourceUpdate(doSourceUpdate);
-    sim.setSourceTimeRatio(sourceTimeRatio);
+    sim.setSourceTimeRatio(sourceTimeRatio, impExRatio);
     sim.setImplicitSources(implicitSources);
+    sim.setExplicitSourceFuncs(exSourceFuncs);
     sim.setDoDC(doDC);
 
     sim.forceRecordAll();
@@ -89,7 +104,7 @@ int main(void){
 
         t = sim.getTime();
         step = sim.getStep();
-        // cout << "t: " << t << endl;
+        cout << "t: " << t << endl;
     }
 
     cout << "Simulation Completed." << endl;

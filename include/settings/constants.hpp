@@ -7,6 +7,7 @@
 const double pAtmos = 101325.0;
 const double myPI = 3.14159265358979323846;
 const double kB = 1.38e-23;
+const double kBScaled = kB / pAtmos;
 const double planckConst = 6.626e-34;
 const double dalton = 1.661e-27;
 const double uniGasConst = 8.314;
@@ -33,7 +34,7 @@ const double brag_a0 = 0.5063;
 // scaling coefficients
 
 /* scaling factor for Amps and seconds (due to scaling for p and B) -> to put system in atms for p and B/sqrt(u0) for B */
-const double resisScaling = 1 / (vacPermeab * sqrt(pAtmos));
+// const double resisScaling = 1 / (vacPermeab * sqrt(pAtmos));
 
 
 
