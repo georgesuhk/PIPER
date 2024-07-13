@@ -83,6 +83,16 @@ double Simulation::get_min_dt(){
     return evolverPtr->getTimeStep(mesh);
 }
 
+void Simulation::update_dt(){
+    dt = get_min_dt();
+}
+
+void Simulation::force_set_dt(double input_dt){
+    dt = input_dt;
+}
+
+
+
 void Simulation::evolve(){
 
     // applying boundary conditions
@@ -90,7 +100,6 @@ void Simulation::evolve(){
 
 
     // getting time step and updating time
-    double dt = get_min_dt();
     t += dt;
     step += 1;
 
@@ -107,7 +116,6 @@ void Simulation::evolve(){
             cout << "\rProgress: " << 100 << " %      " << std::endl;
         }
     }
-
     /* Caching */
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
@@ -133,13 +141,13 @@ void Simulation::evolve(){
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
 
-    cout << u[round(mesh.nCellsX/2)][2] << endl;
+    // cout << u[round(mesh.nCellsX/2)][2] << endl;
 }
 
-void Simulation::sourceUpdates(double dt){
+void Simulation::sourceUpdates(double input_dt){
 
     // implicit source update time step
-    double source_dt_imp = dt / source_time_ratio;
+    double source_dt_imp = input_dt / source_time_ratio;
     double source_dt_ex = source_dt_imp / imp_ex_time_ratio;
 
     // how many times the implicit update has been applied
@@ -224,6 +232,14 @@ void Simulation::informFinished(){
     //could add exporting here
 }
 
+
+
+
+// CONTROL ======
+
+void forceTimeStep(double input_dt){
+
+}
 
 
 

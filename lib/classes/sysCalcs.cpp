@@ -435,12 +435,11 @@ CellVec PIP0_Calcs::f(CellVec& u){
     f_out[7] = Bz * vx - Bx * vz;
     f_out[8] = 0;
     // w flux
-    // f_out[9] = 0;
-    // f_out[10] = 0;
-    // f_out[11] = 0;
-    f_out[9] = vx * wx + mass_frac_n * pow(wx, 2.0) - (1 / (mass_frac_i * rho)) * (MagE - pow(Bx, 2.0));
-    f_out[10] = vx * wy + mass_frac_n * wx * wy + (1 / (mass_frac_i * rho)) * (Bx * By);
-    f_out[11] = vx * wz + mass_frac_n * wx * wz + (1 / (mass_frac_i * rho)) * (Bx * Bz);
+
+    // new w evo
+    f_out[9] = - (1 / (mass_frac_i * rho)) * (MagE - pow(Bx, 2.0));
+    f_out[10] = (1 / (mass_frac_i * rho)) * (Bx * By);
+    f_out[11] = (1 / (mass_frac_i * rho)) * (Bx * Bz);
 
     return f_out;
 };
@@ -484,9 +483,9 @@ CellVec PIP0_Calcs::g(CellVec& u){
     // g_out[9] = 0;
     // g_out[10] = 0;
     // g_out[11] = 0;
-    g_out[9] = vy * wx + mass_frac_n * wy * wx + (1 / (mass_frac_i * rho)) * (By * Bx);
-    g_out[10] = vy * wy + mass_frac_n * pow(wy, 2.0) - (1 / (mass_frac_i * rho)) * (MagE - pow(By, 2.0));
-    g_out[11] = vy * wz + mass_frac_n * wy * wz + (1 / (mass_frac_i * rho)) * (By * Bz);
+    g_out[9] = (1 / (mass_frac_i * rho)) * (By * Bx);
+    g_out[10] = - (1 / (mass_frac_i * rho)) * (MagE - pow(By, 2.0));
+    g_out[11] = (1 / (mass_frac_i * rho)) * (By * Bz);
 
     return g_out;
 };

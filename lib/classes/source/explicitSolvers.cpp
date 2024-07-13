@@ -10,7 +10,7 @@ void RK2(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, Source
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
             for (int var = 0; var < cellVarsNums; var++){
-                inner[i][j][var] = u[i][j][var] + k1[i][j][var];
+                inner[i][j][var] = u[i][j][var] + dt * k1[i][j][var];
             }
         }
     }
@@ -22,12 +22,10 @@ void RK2(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, Source
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
             for (int var = 0; var < cellVarsNums; var++){
-                inner[i][j][var] = u[i][j][var] + 0.5 * dt * (k1[i][j][var] + k2[i][j][var]);
+                u[i][j][var] = u[i][j][var] + 0.5 * dt * (k1[i][j][var] + k2[i][j][var]);
             }
         }
     }
 
-    BC(inner, mesh, sysPtr);
-
-    u = inner;
+    BC(u, mesh, sysPtr);
 }

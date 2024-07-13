@@ -178,6 +178,9 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
     ofstream wzFile(folder+"wz.csv");
     ofstream mass_frac_n_File(folder+"mass_frac_n.csv");
     ofstream mass_frac_i_File(folder+"mass_frac_i.csv");
+    ofstream vnxFile(folder+"vnx.csv");
+    ofstream vixFile(folder+"vix.csv");
+
 
     // total variables
     ofstream totalUFile(folder+"totalU.csv");
@@ -226,7 +229,7 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
         }
     }
 
-    double rho, vx, vy, vz, p, e, T, Bx, By, Bz, wx, wy, wz, mass_frac_n, mass_frac_i; 
+    double rho, vx, vy, vz, p, e, T, Bx, By, Bz, wx, wy, wz, mass_frac_n, mass_frac_i, vnx, vix; 
     for (int j = 1; j < mesh.nCellsY+1; j++){
         for (int i = 1; i < mesh.nCellsX+1; i++){
         
@@ -245,6 +248,8 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
             wzFile << "[";
             mass_frac_n_File << "[";
             mass_frac_i_File << "[";
+            vnxFile << "[";
+            vixFile << "[";
 
 
             Vec2D u;
@@ -270,6 +275,8 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
                 wz = uPrim[11];
                 mass_frac_n = sysPtr->interp_mass_frac_n_Prim(uPrim);
                 mass_frac_i = sysPtr->interp_mass_frac_i_Prim(uPrim);
+                vnx = vx + mass_frac_i * wx;
+                vix = vx + mass_frac_n * wx;
 
                 if (timeIdx != int(uTimeSeries.size())-1){
                     rhoFile << rho << ",";
@@ -287,6 +294,9 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
                     wzFile << wz << ",";
                     mass_frac_n_File << mass_frac_n << ",";
                     mass_frac_i_File << mass_frac_i << ",";
+                    vnxFile << vnx << ",";
+                    vixFile << vix << ",";
+
                 }
                 else {
                     if (i != mesh.nCellsX){
@@ -305,6 +315,9 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
                         wzFile << wz << "],";
                         mass_frac_n_File << mass_frac_n << "],";
                         mass_frac_i_File << mass_frac_i << "],";
+                        vnxFile << vnx << "],";
+                        vixFile << vix << "],";
+
                     }
                     else {
                         rhoFile << rho << "]" << endl;
@@ -322,6 +335,9 @@ void ExportPIP(vector<Vec2D>& uTimeSeries, vector<double>& recordedTimes, Mesh2D
                         wzFile << wz << "]" << endl;
                         mass_frac_n_File << mass_frac_n << "]" << endl;
                         mass_frac_i_File << mass_frac_i << "]" << endl;
+                        vnxFile << vnx << "]" << endl;
+                        vixFile << vix << "]" << endl;
+
                     }
                 }
             }

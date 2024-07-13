@@ -89,7 +89,7 @@ double IdealEoS::get_e(double& rho, double& p){
 
 double IdealEoS::get_T(double& rho, double& p){
     double n = rho / m;
-    return p / (n * kB);
+    return p / (n * kBScaled);
 };
 
 double IdealEoS::get_p(int& i, int& j){
@@ -248,8 +248,8 @@ double TabEoS::interp_mass_frac_n(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    return 0.5;
-    // return bilinearInterp(mass_frac_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    // return 0.5;
+    return bilinearInterp(mass_frac_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
 double TabEoS::interp_mass_frac_i(double& rho, double& p){
@@ -262,8 +262,8 @@ double TabEoS::interp_mass_frac_i(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    return 0.5;
-    // return bilinearInterp(mass_frac_i_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    // return 0.5;
+    return bilinearInterp(mass_frac_i_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
 

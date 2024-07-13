@@ -1,73 +1,67 @@
-#include "init.hpp"
-#include "testCases.hpp"
 #include "simulation.hpp"
+#include "detachInit.hpp"
 
-// data folders ------
-
-string dataFolder = "./EoSData/HFusion4_2/";
-string resultsFolder = "./output/MHDEoS/";
-
-// choosing system ------
-
+using namespace std;
 const int cellVarsNums = 12;
-// const int cellVarsNums = 9;
 
-double gammaFac = 5.0/3.0;
-double mass = 1.67e-27;
+// grid ------
 
-// setting grid ------
-
-int nCellsX = 100, nCellsY = 2;
+int nCellsX = 30, nCellsY = 2;
 double xMin = 0, xMax = 1;
-double yMin = 0, yMax = 0.1;
+double yMin = 0, yMax = 0.2;
+double tMin = 0, tMax = 0.01/sqrt(pAtmos);
 
-double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF);
+// init params ------
+
+double p_SF = 100;
+vector<double> initParams = {1*p_SF, 200000, 10000, 1*sqrt(p_SF), 0};
 int maxSteps = 100;
 
-// initial conditions ------
+// EoS ------
 
-double rho_SF = 0.021;
-double p_SF = 100.0;
-vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = BrioWuPIP;
+// Ideal
+double gammaFac = 5.0/3.0;
+double mass = 1.67e-27;
+double constResis = 3;
+double mass_frac_n = 0.99;
+double mass_frac_i = 1.0 - mass_frac_n;
 
-// source terms ------
+// Source update and DC ------
+
+bool doDC = true;
 bool doSourceUpdate = true;
-int sourceTimeRatio = 1;
+int sourceTimeRatio = 5;
 int impExRatio = 1;
 // vector<implicitSource> implicitSources = {ohmic_diffusion};
 vector<implicitSource> implicitSources = {};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
-
-// EoS ------
-double constResis = 3;
-double mass_frac_n = 0.2;
-double mass_frac_i = 1.0 - mass_frac_n;
-
-// divergence cleaning ------
-bool doDC = true;
+vector<SourceFuncEx> exSourceFuncs = {w_evolution_func, heating};
 
 // evolver & BCs ------
 
-BCFunc BC = TransBCs;
+BCFunc BC = BohmBCs2;
 SLICEvolver evolver(BC);
 shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 
 // recorder and exporter ------
-double recordingDelayTime = (tMax-tMin)/10;
+
+double recordingDelayTime = (tMax-tMin)/20;
 Exporter exporter = ExportPIP;
+
+// folders and mixture ------
+
+string mixName = "HFusion";
+string resultsFolder = "./output/detachment/";
+string dataFolder = "./EoSData/HFusion4_2/";
 
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 0;
+int forced_step_lim = 300;
 
 /* the ratio to lower time step by */
-double forced_ratio = 0.01;
+double forced_ratio = 0.001;
 
 int main(void){
-    // SET UP ======
-
     Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
     // IdealEoS EoSIdeal(gammaFac, mass);
@@ -82,11 +76,8 @@ int main(void){
 
     PIP0_Calcs sysCalcs(EoSPtr);
     shared_ptr<SysCalcs> sysPtr = make_shared<PIP0_Calcs>(sysCalcs);
+    Vec2D uInit = initDetachment(initParams, mixName, mesh, sysPtr, BC);
 
-    // FIPCalcs sysCalcs(EoSPtr);
-    // shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
-
-    Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
     Recorder recorder;
     recorder.setDelayTime(recordingDelayTime);
     shared_ptr<Recorder> recorderPtr = make_shared<Recorder>(recorder);
@@ -99,15 +90,14 @@ int main(void){
     sim.setDoDC(doDC);
 
     sim.forceRecordAll();
-    sim.enableProgressUpdate(0.1);
+    sim.enableProgressUpdate(0.05);
     sim.inform();
-
-    // SIMULATION ======
 
     cout << "Starting simulation. \n\n" << endl;
     double t = tMin, step = 1;
 
     while (t <= tMax && step <= maxSteps){
+        
         // forcing smaller time steps in the beginning
         if (step < forced_step_lim){
             double forced_dt = forced_ratio * sim.get_min_dt();
@@ -127,5 +117,7 @@ int main(void){
     sim.forceRecordAll();
     sim.exportAll(resultsFolder);
 
-    return 0; 
+
+    return 0;
+
 }

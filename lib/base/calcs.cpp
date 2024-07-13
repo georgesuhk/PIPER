@@ -41,20 +41,20 @@ double getCoulombLog(double& n_e, double T){
 double get_coll_freq_in(double& n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
-    return coll_freq * sqrt(pAtmos);
+    return coll_freq / sqrt(pAtmos);
 }
 
 /* returns nu_en, the collision rate between e- and neutrals */
 double get_coll_freq_en(double n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
-    return coll_freq * sqrt(pAtmos);
+    return coll_freq / sqrt(pAtmos);
 }
 
 /* returns nu_ei, the collision rate between e- and ions */
 double get_coll_freq_ei(double& n_i, double& coulombLog, double& T){
     double coll_freq = 3.7e-6 * ( (n_i * coulombLog) / (pow(T, 3.0/2.0)) ) * brag_a0;
-    return coll_freq * sqrt(pAtmos);
+    return coll_freq / sqrt(pAtmos);
 }
 
 

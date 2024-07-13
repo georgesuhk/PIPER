@@ -69,6 +69,12 @@ class Simulation {
         /* returns the minimum dt across all the evolvers in the simulation */
         double get_min_dt();
 
+        /* updates the stored dt with min dt */
+        void update_dt();
+
+        /* forces dt to a particular value */
+        void force_set_dt(double input_dt);
+
         /* applies conservative evolution to all cells in the simulation */
         void evolve();
 
@@ -95,6 +101,7 @@ class Simulation {
         void enableProgressUpdate(double updatePercentage);
         
         void informFinished();
+
 
 
         // OTHER SYSTEMS ======
@@ -168,6 +175,7 @@ class Simulation {
         // control variables ------
 
         string resultsFolder;
+        double dt;
         double t = 0;
         int step = 0;
         double tMax;

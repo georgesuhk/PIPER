@@ -60,6 +60,12 @@ add_executable(MHDEoS ${PROJECT_SOURCE_DIR}/src/MHDEoS.cpp)
 set_target_properties(MHDEoS PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(MHDEoS PUBLIC baseLib classesLib mutation++)
 
+# detachment
+add_executable(detachment ${PROJECT_SOURCE_DIR}/src/detachment.cpp)
+set_target_properties(detachment PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(detachment PUBLIC baseLib classesLib mutation++)
+
+
 
 # EXECUTABLES FOR CONSTRUCTION --------------------------------------------
 

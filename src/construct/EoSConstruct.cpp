@@ -82,9 +82,9 @@ int main(void){
             thermCon_Table[pIdx][rhoIdx] = mix.equilibriumThermalConductivity() * thermConScale;
 
             /* Number densities */
-            mass_frac_e_Table[pIdx][rhoIdx] = round(mix.X()[0] * roundFactor) / roundFactor;
-            mass_frac_n_Table[pIdx][rhoIdx] = round(mix.X()[1] * roundFactor) / roundFactor;
-            mass_frac_i_Table[pIdx][rhoIdx] = round(mix.X()[2] * roundFactor) / roundFactor;
+            mass_frac_e_Table[pIdx][rhoIdx] = round(mix.Y()[0] * roundFactor) / roundFactor;
+            mass_frac_n_Table[pIdx][rhoIdx] = round(mix.Y()[1] * roundFactor) / roundFactor;
+            mass_frac_i_Table[pIdx][rhoIdx] = round(mix.Y()[2] * roundFactor) / roundFactor;
 
         }
     }
