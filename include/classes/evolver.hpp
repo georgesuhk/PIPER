@@ -107,7 +107,7 @@ class SLICEvolver : public Evolver{
 
     protected:
         double w = 1;
-        Limiter limFunc = minbee;
+        Limiter limFunc = vanLeer;
 };
 
 

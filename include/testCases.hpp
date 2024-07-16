@@ -5,7 +5,7 @@
 
 extern double rho_SF;
 extern double p_SF;
-double wx = 0;
+double wx = 0.0;
 
 //BW Test
 

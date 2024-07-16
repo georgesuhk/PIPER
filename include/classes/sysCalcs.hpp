@@ -133,6 +133,9 @@ class SysCalcs {
         // OTHER EVALUATIONS =====
         Scalar2D getDivBField(Vec2D& u, Mesh2D& mesh);
 
+        /* calculates and sets w within u based on the no inertial approximation */
+        virtual void set_w_no_inert(Vec2D& u, Mesh2D& mesh) = 0;
+
 
 
         // OTHER ======
@@ -207,6 +210,11 @@ class PIP0_Calcs : public SysCalcs{
 
         // WAVE CALCULATIONS ======
         virtual double getFastestWaveSpeed(CellVec& u) override;
+
+        // OTHER ======
+
+        /* calculates and sets w within u based on the no inertial approximation */
+        virtual void set_w_no_inert(Vec2D& u, Mesh2D& mesh) override;
 
     protected:
         int cellVecLen = 12; // number of variables stored for a cell, local to this sysCalc   

@@ -6,16 +6,16 @@ const int cellVarsNums = 12;
 
 // grid ------
 
-int nCellsX = 30, nCellsY = 2;
+int nCellsX = 50, nCellsY = 2;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.2;
-double tMin = 0, tMax = 0.01/sqrt(pAtmos);
+double tMin = 0, tMax = 1.0/sqrt(pAtmos);
 
 // init params ------
 
 double p_SF = 100;
-vector<double> initParams = {1*p_SF, 200000, 10000, 1*sqrt(p_SF), 0};
-int maxSteps = 100;
+vector<double> initParams = {1*p_SF, 300000, 5000, 1*sqrt(p_SF), 0};
+int maxSteps = 100000;
 
 // EoS ------
 
@@ -30,11 +30,11 @@ double mass_frac_i = 1.0 - mass_frac_n;
 
 bool doDC = true;
 bool doSourceUpdate = true;
-int sourceTimeRatio = 5;
+int sourceTimeRatio = 1;
 int impExRatio = 1;
 // vector<implicitSource> implicitSources = {ohmic_diffusion};
 vector<implicitSource> implicitSources = {};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func, heating};
+vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // evolver & BCs ------
 
@@ -56,10 +56,10 @@ string dataFolder = "./EoSData/HFusion4_2/";
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 300;
+int forced_step_lim = 100;
 
 /* the ratio to lower time step by */
-double forced_ratio = 0.001;
+double forced_ratio = 0.01;
 
 int main(void){
     Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
@@ -90,7 +90,7 @@ int main(void){
     sim.setDoDC(doDC);
 
     sim.forceRecordAll();
-    sim.enableProgressUpdate(0.05);
+    sim.enableProgressUpdate(0.1);
     sim.inform();
 
     cout << "Starting simulation. \n\n" << endl;

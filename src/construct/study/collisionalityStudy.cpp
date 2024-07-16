@@ -7,7 +7,7 @@ using namespace Mutation;
 using namespace Mutation::Thermodynamics;
 using namespace Mutation::Transport; 
  
-const int cellVarsNums = 9;
+const int cellVarsNums = 12;
 
 // SETTINGS ------
 

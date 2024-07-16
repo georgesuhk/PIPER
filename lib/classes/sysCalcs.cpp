@@ -108,6 +108,9 @@ double SysCalcs::interp_mass_frac_n(CellVec& u){
     double rho = u[0];
     double p = get_p(u);
     double mass_frac_n = EoSPtr->interp_mass_frac_n(rho, p);
+    if (mass_frac_n == 0){
+        mass_frac_n += 1e-200;
+    }
     return mass_frac_n;
 }
 
@@ -116,7 +119,7 @@ double SysCalcs::interp_mass_frac_i(CellVec& u){
     double p = get_p(u);
     double mass_frac_i = EoSPtr->interp_mass_frac_i(rho, p);
     if (mass_frac_i == 0){
-        mass_frac_i += 1e-6;
+        mass_frac_i += 1e-200;
     }
     return mass_frac_i;
 }
@@ -435,11 +438,17 @@ CellVec PIP0_Calcs::f(CellVec& u){
     f_out[7] = Bz * vx - Bx * vz;
     f_out[8] = 0;
     // w flux
+    f_out[9] = 0;
+    f_out[10] = 0;
+    f_out[11] = 0;
 
-    // new w evo
-    f_out[9] = - (1 / (mass_frac_i * rho)) * (MagE - pow(Bx, 2.0));
-    f_out[10] = (1 / (mass_frac_i * rho)) * (Bx * By);
-    f_out[11] = (1 / (mass_frac_i * rho)) * (Bx * Bz);
+
+    // w evo with mag
+    // f_out[9] = - (1 / (mass_frac_i * rho)) * (MagE - pow(Bx, 2.0));
+    // f_out[10] = (1 / (mass_frac_i * rho)) * (Bx * By);
+    // f_out[11] = (1 / (mass_frac_i * rho)) * (Bx * Bz);
+
+    //w evo with no mag
 
     return f_out;
 };
@@ -480,12 +489,14 @@ CellVec PIP0_Calcs::g(CellVec& u){
     g_out[7] = Bz * vy - By * vz;
     g_out[8] = 0;
     // w flux
-    // g_out[9] = 0;
-    // g_out[10] = 0;
-    // g_out[11] = 0;
-    g_out[9] = (1 / (mass_frac_i * rho)) * (By * Bx);
-    g_out[10] = - (1 / (mass_frac_i * rho)) * (MagE - pow(By, 2.0));
-    g_out[11] = (1 / (mass_frac_i * rho)) * (By * Bz);
+    g_out[9] = 0;
+    g_out[10] = 0;
+    g_out[11] = 0;
+
+
+    // g_out[9] = (1 / (mass_frac_i * rho)) * (By * Bx);
+    // g_out[10] = - (1 / (mass_frac_i * rho)) * (MagE - pow(By, 2.0));
+    // g_out[11] = (1 / (mass_frac_i * rho)) * (By * Bz);
 
     return g_out;
 };
@@ -512,6 +523,127 @@ double PIP0_Calcs::getFastestWaveSpeed(CellVec& u){
 
     return a;
 };
+
+
+
+void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
+    /* constant values */
+    double two_dx = 2 * mesh.dx;
+    double two_dy = 2 * mesh.dy;
+
+    /* state vars */
+    double Bx, By, Bz, mass_frac_i, mass_frac_n, n_i, n_n, m_i, m_n, T;
+
+    /* state vars used in derivatives */
+    double mfi_x_plus, mfi_x_minus, mfi_y_plus, mfi_y_minus;
+    double T_x_plus, T_x_minus, T_y_plus, T_y_minus;
+
+    /* derivatives */
+    double dBx_dx, dBx_dy, dBy_dx, dBy_dy, dBz_dx, dBz_dy;
+    double d_pn_dx, d_pn_dy, d_pei_dx, d_pei_dy;
+
+    /* compound terms */
+    double mag_prefac, mag_term_x, mag_term_y, mag_term_z;
+    double J_term_prefac, J_x, J_y, J_z;
+    double G_x, G_y, G_z;
+
+    /* collision freqs */
+    double alpha_n, alpha_en, alpha_in;
+
+    for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int j = 1; j < mesh.nCellsY+1; j++){
+
+            /* setting state vars */
+            Bx = u[i][j][5];
+            By = u[i][j][6];
+            Bz = u[i][j][7];
+
+            mass_frac_i = interp_mass_frac_i(u[i][j]);
+            mass_frac_n = 1 - mass_frac_i;
+            n_i = get_n_i(u[i][j][0], mass_frac_i);
+            n_n = get_n_n(u[i][j][0], mass_frac_n);
+            m_n = get_m_n();
+            m_i = get_m_i();
+            T = get_T(u[i][j]);
+
+            /* calculating collision integrals */
+            alpha_in = get_coll_coeff_in(n_i, n_n, m_i, m_n, T);
+            alpha_en = get_coll_coeff_en(n_i, n_n, m_i, m_n, T);
+            alpha_n = alpha_in + alpha_en;
+
+            /* calculating derivatives */
+            T_x_plus = get_T(u[i+1][j]);
+            T_x_minus = get_T(u[i-1][j]);
+            T_y_plus = get_T(u[i][j+1]);
+            T_y_minus = get_T(u[i][j-1]);
+
+            mass_frac_i = interp_mass_frac_i(u[i][j]);
+            mass_frac_n = 1 - mass_frac_i;
+            mfi_x_plus = interp_mass_frac_i(u[i+1][j]);
+            mfi_x_minus = interp_mass_frac_i(u[i-1][j]);
+            mfi_y_plus = interp_mass_frac_i(u[i][j+1]);
+            mfi_y_minus = interp_mass_frac_i(u[i][j-1]);
+
+            /* partial pressure derivatives */
+            d_pn_dx = kBScaled * ( get_n_n(u[i+1][j][0], 1-mfi_x_plus) * T_x_plus - get_n_n(u[i-1][j][0], 1-mfi_x_minus) * T_x_minus) / two_dx;
+            d_pn_dy = kBScaled * ( get_n_n(u[i][j+1][0], 1-mfi_y_plus) * T_y_plus - get_n_n(u[i][j-1][0], 1-mfi_y_minus) * T_y_minus) / two_dy;
+
+            d_pei_dx = kBScaled * ( 2 * get_n_i(u[i+1][j][0], mfi_x_plus) * T_x_plus - 2 * get_n_i(u[i-1][j][0], mfi_x_minus) * T_x_minus) / two_dx;
+            d_pei_dy = kBScaled * ( 2 * get_n_i(u[i][j+1][0], mfi_y_plus) * T_y_plus - 2 * get_n_i(u[i][j-1][0], mfi_y_minus) * T_y_minus) / two_dy;
+
+            /* Bx derivatives */
+            dBx_dx = ( u[i+1][j][5] - u[i-1][j][5] ) / two_dx;
+            dBx_dy = ( u[i][j+1][5] - u[i][j-1][5] ) / two_dy;
+
+            /* Bx derivatives */
+            dBy_dx = ( u[i+1][j][6] - u[i-1][j][6] ) / two_dx;
+            dBy_dy = ( u[i][j+1][6] - u[i][j-1][6] ) / two_dy;
+
+            /* Bz derivatives */
+            dBz_dx = ( u[i+1][j][7] - u[i-1][j][7] ) / two_dx;
+            dBz_dy = ( u[i][j+1][7] - u[i][j-1][7] ) / two_dy;
+
+            // COMPOUND TERMS 
+
+            /* j x B terms */
+            mag_prefac = mass_frac_n / alpha_in;
+            mag_term_x = mag_prefac * (By * dBx_dy - By * dBy_dx - Bz * dBz_dx);
+            mag_term_y = mag_prefac * (Bx * dBy_dx - Bx * dBx_dy - Bz * dBz_dy);
+            mag_term_z = mag_prefac * (Bx * dBz_dx + By * dBz_dy);
+
+            /* j terms */
+            J_term_prefac = alpha_en / (eChargeScaled * n_i * alpha_n);
+            J_x = dBz_dy;
+            J_y = - dBz_dx;
+            J_z = dBy_dx - dBx_dy;
+
+            /* G */
+            G_x = mass_frac_n * d_pei_dx - mass_frac_i * d_pn_dx;
+            G_y = mass_frac_n * d_pei_dy - mass_frac_i * d_pn_dy;
+            G_z = 0;
+
+            /* size comparison */
+            // if (i == round(mesh.nCellsX/2) && j == 1){
+            //     cout << "1 / a_n: " << 1 / alpha_n << endl;
+            //     cout << "G_x term: " << G_x / alpha_n << endl;
+            //     cout << "mag term: " << mag_term_x << endl;
+            //     cout << "J_z term: " << J_z << endl;
+            //     cout << "J_z term * prefac: " << J_term_prefac * J_z << endl; 
+            //     cout << "prefac: " << J_term_prefac << endl;
+            // }
+
+            // setting and assembling
+            u[i][j][9] = - G_x / alpha_n + mag_term_x + J_term_prefac * J_x;
+            u[i][j][10] = - G_y / alpha_n + mag_term_y + J_term_prefac * J_y;
+            u[i][j][11] = - G_z / alpha_n + mag_term_z + J_term_prefac * J_z;
+
+        }
+    }
+
+
+
+
+}
 
 
 

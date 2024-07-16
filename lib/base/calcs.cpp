@@ -41,14 +41,14 @@ double getCoulombLog(double& n_e, double T){
 double get_coll_freq_in(double& n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
-    return coll_freq / sqrt(pAtmos);
+    return coll_freq / sqrt(pAtmos) * 0.0001;
 }
 
 /* returns nu_en, the collision rate between e- and neutrals */
 double get_coll_freq_en(double n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
-    return coll_freq / sqrt(pAtmos);
+    return coll_freq / sqrt(pAtmos) * 0.0001;
 }
 
 /* returns nu_ei, the collision rate between e- and ions */
@@ -63,13 +63,11 @@ double get_coll_freq_ei(double& n_i, double& coulombLog, double& T){
 
 /* returns the i-n alpha collision coefficients in Braginskii 1965 */
 double get_coll_coeff_in(double& n_i, double& n_n, double& m_i, double m_n, double& T){
-    double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     return m_i * n_i * get_coll_freq_in(n_n, m_i, m_n, T);
 }
 
 /* returns the e-n alpha collision coefficients in Braginskii 1965 */
 double get_coll_coeff_en(double& n_i, double& n_n, double& m_i, double& m_n, double& T){
-    double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     return m_i * n_i * get_coll_freq_en(n_n, m_i, m_n, T);
 }
 

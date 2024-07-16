@@ -16,6 +16,7 @@ const double elementaryCharge = 1.602e-19;
 const double electronMass = 9.109e-31;
 const double protonMass = 1.6726e-27;
 const double vacPermeab = 1.2566e-6;
+const double eChargeScaled = sqrt(vacPermeab) * elementaryCharge;
 
 // material properties
 const double airParticleMass = 4.81e-26;

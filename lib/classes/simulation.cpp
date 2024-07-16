@@ -126,6 +126,9 @@ void Simulation::evolve(){
         sourceUpdates(dt/2);
     }
 
+    /* explicitly setting w for no inertia approx */
+    // sysPtr->set_w_no_inert(u, mesh);
+
     /* conservative update - C^(t)*/
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'x');
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
@@ -137,6 +140,10 @@ void Simulation::evolve(){
     if (doSourceUpdate){
         sourceUpdates(dt/2);
     }
+
+    /* explicitly setting w for no inertia approx */
+    // sysPtr->set_w_no_inert(u, mesh);
+
 
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
@@ -151,20 +158,15 @@ void Simulation::sourceUpdates(double input_dt){
     double source_dt_ex = source_dt_imp / imp_ex_time_ratio;
 
     // how many times the implicit update has been applied
-    int impSourceUpdateCounter = 0;
-    int exSourceUpdateCounter = 0;
-    
+    int impSourceUpdateCounter = 0;    
 
     // diffusion BC
     string diffBC = "Neumann";
 
     while (impSourceUpdateCounter < source_time_ratio){
-        impSourceUpdateCounter += 1;
 
-        /* implicit updates */
-        for (implicitSource& source : implicitSources){
-            source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
-        }
+        // how many times the explicit update has been applied per implicit update step
+        int exSourceUpdateCounter = 0;
 
         /* explicit updates - can be multiple for each implicit update */
         while (exSourceUpdateCounter < imp_ex_time_ratio){
@@ -174,6 +176,12 @@ void Simulation::sourceUpdates(double input_dt){
             }
         }
 
+        /* implicit updates */
+        impSourceUpdateCounter += 1;
+
+        for (implicitSource& source : implicitSources){
+            source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
+        }
     }
 }
 

@@ -17,31 +17,33 @@ double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 100, nCellsY = 2;
+int nCellsX = 200, nCellsY = 2;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.1;
 
 double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF);
-int maxSteps = 100;
+int maxSteps = 10000;
 
 // initial conditions ------
 
-double rho_SF = 0.021;
+double rho_SF = 0.061;
 double p_SF = 100.0;
 vector<double> interfacePositions = {0.5};
 vector<CellVec> initCellVecs = BrioWuPIP;
 
 // source terms ------
+ExplicitSolver explicitSolver = RK4;
 bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
 int impExRatio = 1;
-// vector<implicitSource> implicitSources = {ohmic_diffusion};
-vector<implicitSource> implicitSources = {};
+vector<implicitSource> implicitSources = {ohmic_diffusion};
+// vector<implicitSource> implicitSources = {};
+// vector<SourceFuncEx> exSourceFuncs = {};
 vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // EoS ------
 double constResis = 3;
-double mass_frac_n = 0.2;
+double mass_frac_n = 0.5;
 double mass_frac_i = 1.0 - mass_frac_n;
 
 // divergence cleaning ------
@@ -54,7 +56,7 @@ SLICEvolver evolver(BC);
 shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 
 // recorder and exporter ------
-double recordingDelayTime = (tMax-tMin)/10;
+double recordingDelayTime = (tMax-tMin)/20;
 Exporter exporter = ExportPIP;
 
 // forcing initial time steps ------
@@ -94,6 +96,7 @@ int main(void){
     Simulation sim(uInit, evolverPtr, sysPtr, recorderPtr, BC, exporter, mesh, resultsFolder, tMax);
     sim.setDoSourceUpdate(doSourceUpdate);
     sim.setSourceTimeRatio(sourceTimeRatio, impExRatio);
+    sim.setExplicitSolver(explicitSolver);
     sim.setImplicitSources(implicitSources);
     sim.setExplicitSourceFuncs(exSourceFuncs);
     sim.setDoDC(doDC);

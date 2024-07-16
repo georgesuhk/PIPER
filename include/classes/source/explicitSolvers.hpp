@@ -7,6 +7,7 @@ typedef void (*ExplicitSolver)(Vec2D&, shared_ptr<SysCalcs>, Mesh2D&, double&, S
 
 void RK2(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, SourceFuncEx sourceFunc, BCFunc BC);
 
+void RK4(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, SourceFuncEx sourceFunc, BCFunc BC);
 
 
 #endif 
