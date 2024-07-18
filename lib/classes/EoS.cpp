@@ -68,8 +68,8 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
     }
 
     double rho, vx, vy, vz, e, KE, BMag, MagE, p;
-    for (int i = 1; i < mesh.nCellsX+1; i++){
-        for (int j = 1; j < mesh.nCellsY+1; j++){
+    for (int i = 0; i < mesh.nCellsX+2; i++){
+        for (int j = 0; j < mesh.nCellsY+2; j++){
             rho = u[i][j][0];
             vx = u[i][j][1] / rho;
             vy = u[i][j][2] / rho;

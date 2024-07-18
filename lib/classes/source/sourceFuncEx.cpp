@@ -82,7 +82,6 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             mfi_y_plus = sysPtr->get_mass_frac_i(i, j+1);
             mfi_y_minus = sysPtr->get_mass_frac_i(i, j-1);
 
-
             /* components of the convective derivative */
 
             /* wx derivatives */

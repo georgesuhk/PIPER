@@ -77,7 +77,7 @@ array<Vec2D,2> reconHS(Vec2D& uL, Vec2D& uR, shared_ptr<SysCalcs> sysPtr, Mesh2D
 
             if (axis == 'x'){
                 for (int var = 0; var < (cellVarsNums); var++){
-                    reconHS_var = 0.5 * (dt/mesh.dx) * (sysPtr->f(uR[i][j])[var] - sysPtr->f(uL[i][j])[var]);
+                    reconHS_var = 0.5 * (dt/mesh.dx) * (sysPtr->f(uR[i][j], i, j, true)[var] - sysPtr->f(uL[i][j], i, j, true)[var]);
 
                     uReconHS_L[i][j][var] = uL[i][j][var] - reconHS_var;
                     uReconHS_R[i][j][var] = uR[i][j][var] - reconHS_var;
@@ -85,7 +85,7 @@ array<Vec2D,2> reconHS(Vec2D& uL, Vec2D& uR, shared_ptr<SysCalcs> sysPtr, Mesh2D
 
             } else if (axis == 'y'){
                 for (int var = 0; var < (cellVarsNums); var++){
-                    reconHS_var = 0.5 * (dt/mesh.dy) * (sysPtr->g(uR[i][j])[var] - sysPtr->g(uL[i][j])[var]);
+                    reconHS_var = 0.5 * (dt/mesh.dy) * (sysPtr->g(uR[i][j], i, j, true)[var] - sysPtr->g(uL[i][j], i, j, true)[var]);
 
                     uReconHS_L[i][j][var] = uL[i][j][var] - reconHS_var;
                     uReconHS_R[i][j][var] = uR[i][j][var] - reconHS_var;

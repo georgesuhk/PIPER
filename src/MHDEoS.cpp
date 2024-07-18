@@ -16,7 +16,7 @@ double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 300, nCellsY = 2;
+int nCellsX = 200, nCellsY = 2;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.1;
 
@@ -32,7 +32,7 @@ vector<CellVec> initCellVecs = BrioWuPIP;
 
 // source terms ------
 ExplicitSolver explicitSolver = RK4;
-bool doSourceUpdate = false;
+bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
 int impExRatio = 1;
 // vector<implicitSource> implicitSources = {ohmic_diffusion};

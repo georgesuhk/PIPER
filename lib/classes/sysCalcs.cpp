@@ -53,7 +53,11 @@ double SysCalcs::get_T(int i, int j){
 
 double SysCalcs::interp_T(CellVec& u){
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
+    return EoSPtr->interp_T(rho, p);
+}
+
+double SysCalcs::interp_T(double& rho, double& p){
     return EoSPtr->interp_T(rho, p);
 }
 
@@ -82,11 +86,11 @@ double SysCalcs::get_e(CellVec& u){
 
 double SysCalcs::interp_gamma(CellVec& u){
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
     return EoSPtr->interp_gamma(rho, p);
 };
 
-double SysCalcs::get_p(CellVec& u){
+double SysCalcs::interp_p(CellVec& u){
     double e = get_e(u);
     return EoSPtr->interp_p(u[0], e);
 };
@@ -105,13 +109,13 @@ double SysCalcs::get_m_n(){
 
 double SysCalcs::interp_mass_frac_e(CellVec& u){
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
     return EoSPtr->interp_mass_frac_e(rho, p);
 }
 
 double SysCalcs::interp_mass_frac_n(CellVec& u){
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
     double mass_frac_n = EoSPtr->interp_mass_frac_n(rho, p);
     if (mass_frac_n == 0){
         mass_frac_n += 1e-200;
@@ -125,12 +129,16 @@ double SysCalcs::get_mass_frac_i(int i, int j){
 
 double SysCalcs::interp_mass_frac_i(CellVec& u){
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
     double mass_frac_i = EoSPtr->interp_mass_frac_i(rho, p);
     if (mass_frac_i == 0){
         mass_frac_i += 1e-200;
     }
     return mass_frac_i;
+}
+
+double SysCalcs::interp_mass_frac_i(double& rho, double& p){
+    return EoSPtr->interp_mass_frac_i(rho, p);
 }
 
 double SysCalcs::get_n_n(double rho, double mass_frac_n){
@@ -144,7 +152,7 @@ double SysCalcs::get_n_i(double rho, double mass_frac_i){
 double SysCalcs::get_Resis(CellVec& u, int i, int j, bool interp){
     double resis;
     double rho = u[0];
-    double p = get_p(u);
+    double p = interp_p(u);
 
     if (interp){
         // re-interprelating the resistivity for current cell
@@ -158,6 +166,9 @@ double SysCalcs::get_Resis(CellVec& u, int i, int j, bool interp){
     return resis;
 }
 
+double SysCalcs::interp_Resis(double& rho, double& p){
+    return EoSPtr->interp_Resis(rho, p);
+}
 
 // operated on both prim and conserv ------
 
@@ -171,7 +182,7 @@ double SysCalcs::get_MagE(CellVec& u){
 
 // Wave speed estimations ======
 double SysCalcs::get_Cs(CellVec& u){
-    double p = get_p(u);
+    double p = interp_p(u);
     return EoSPtr->get_Cs(u[0], p);
 };
 
@@ -256,7 +267,7 @@ CellVec FIPCalcs::conservToPrim(CellVec& u){
     uPrim[1] = u[1] / u[0];
     uPrim[2] = u[2] / u[0];
     uPrim[3] = u[3] / u[0];
-    uPrim[4] = get_p(u);
+    uPrim[4] = interp_p(u);
     uPrim[5] = u[5];
     uPrim[6] = u[6];
     uPrim[7] = u[7];
@@ -265,7 +276,7 @@ CellVec FIPCalcs::conservToPrim(CellVec& u){
     return uPrim;
 };
 
-CellVec FIPCalcs::f(CellVec& u){
+CellVec FIPCalcs::f(CellVec& u, int i, int j, bool interp){
     CellVec f_out(cellVecLen, 0);
 
     double rho = u[0];
@@ -278,7 +289,7 @@ CellVec FIPCalcs::f(CellVec& u){
     double Bz = u[7];
     double psi = u[8];
     
-    double p = get_p(u);
+    double p = interp_p(u);
     double MagE = get_MagE(u);
     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
 
@@ -295,7 +306,7 @@ CellVec FIPCalcs::f(CellVec& u){
     return f_out;
 };
 
-CellVec FIPCalcs::g(CellVec& u){
+CellVec FIPCalcs::g(CellVec& u, int i, int j, bool interp){
     CellVec g_out(cellVecLen, 0);
 
     double rho = u[0];
@@ -308,7 +319,7 @@ CellVec FIPCalcs::g(CellVec& u){
     double Bz = u[7];
     double psi = u[8];
 
-    double p = get_p(u);
+    double p = interp_p(u);
     double MagE = get_MagE(u);
     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
 
@@ -397,7 +408,7 @@ CellVec PIP0_Calcs::conservToPrim(CellVec& u){
     uPrim[1] = u[1] / u[0];
     uPrim[2] = u[2] / u[0];
     uPrim[3] = u[3] / u[0];
-    uPrim[4] = get_p(u);
+    uPrim[4] = interp_p(u);
     uPrim[5] = u[5];
     uPrim[6] = u[6];
     uPrim[7] = u[7];
@@ -411,7 +422,7 @@ CellVec PIP0_Calcs::conservToPrim(CellVec& u){
     return uPrim;
 };
 
-CellVec PIP0_Calcs::f(CellVec& u){
+CellVec PIP0_Calcs::f(CellVec& u, int i, int j, bool interp){
     CellVec f_out(cellVecLen, 0);
 
     double rho = u[0];
@@ -427,7 +438,7 @@ CellVec PIP0_Calcs::f(CellVec& u){
     double wy = u[10];
     double wz = u[11];
     
-    double p = get_p(u);
+    double p = interp_p(u);
     double E = get_E(u);
     double total_neutral_E = get_total_neutral_E(u);
     double MagE = get_MagE(u);
@@ -462,7 +473,7 @@ CellVec PIP0_Calcs::f(CellVec& u){
     return f_out;
 };
 
-CellVec PIP0_Calcs::g(CellVec& u){
+CellVec PIP0_Calcs::g(CellVec& u, int i, int j, bool interp){
     CellVec g_out(cellVecLen, 0);
 
     double rho = u[0];
@@ -478,7 +489,7 @@ CellVec PIP0_Calcs::g(CellVec& u){
     double wy = u[10];
     double wz = u[11];
 
-    double p = get_p(u);
+    double p = interp_p(u);
     double E = get_E(u);
     double total_neutral_E = get_total_neutral_E(u);
     double MagE = get_MagE(u);

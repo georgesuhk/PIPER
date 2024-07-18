@@ -46,6 +46,8 @@ class SysCalcs {
         double get_T(int i, int j);
 
         double interp_T(CellVec& u);
+        
+        double interp_T(double& rho, double& p);
 
         /* returns total non-magnetic energy (kinetic + internal) */
         double get_E(CellVec& u);
@@ -57,7 +59,7 @@ class SysCalcs {
         double interp_gamma(CellVec& u);
 
         /* returns pressure through interpolation */ 
-        double get_p(CellVec& u);  
+        double interp_p(CellVec& u);  
 
         /* returns pressure via cached values */
         double get_p(int i, int j);
@@ -71,6 +73,7 @@ class SysCalcs {
         /* returns the resistivity */
         double get_Resis(CellVec& u, int i, int j, bool interp = true);
 
+        double interp_Resis(double& rho, double& p);
 
         // Get masses
 
@@ -91,6 +94,8 @@ class SysCalcs {
 
         /* ions */        
         double interp_mass_frac_i(CellVec& u);
+
+        double interp_mass_frac_i(double& rho, double& p);
 
         double get_mass_frac_i(int i, int j);
 
@@ -113,9 +118,9 @@ class SysCalcs {
 
 
         // FLUX FUNCTIONS =====
-        virtual CellVec f(CellVec& u) = 0;
+        virtual CellVec f(CellVec& u, int i, int j, bool interp = false) = 0;
 
-        virtual CellVec g(CellVec& u) = 0;
+        virtual CellVec g(CellVec& u, int i, int j, bool interp = false) = 0;
 
 
         
@@ -169,8 +174,8 @@ class FIPCalcs : public SysCalcs{
 
 
         // FLUX FUNCTIONS ======
-        virtual CellVec f(CellVec& u) override;
-        virtual CellVec g(CellVec& u) override;
+        virtual CellVec f(CellVec& u, int i, int j, bool interp = false) override;
+        virtual CellVec g(CellVec& u, int i, int j, bool interp = false) override;
 
 
         // WAVE CALCULATIONS ======
@@ -208,8 +213,8 @@ class PIP0_Calcs : public SysCalcs{
 
 
         // FLUX FUNCTIONS ======
-        virtual CellVec f(CellVec& u) override;
-        virtual CellVec g(CellVec& u) override;
+        virtual CellVec f(CellVec& u, int i, int j, bool interp = false) override;
+        virtual CellVec g(CellVec& u, int i, int j, bool interp = false) override;
 
 
         // WAVE CALCULATIONS ======
