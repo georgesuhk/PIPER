@@ -13,6 +13,31 @@ void TransBCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
     u[mesh.nCellsX + 1] = u[mesh.nCellsX];
 }
 
+void LR_RT_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
+    
+    //settings BCs for each inner vector (y direction)
+    for (Vec1D& vec : u){
+        vec[0] = vec[1];
+        vec[mesh.nCellsY + 1] = vec[mesh.nCellsY];
+    }
+
+    //setting BCs for outer vector (x direction)
+
+    // left (reflective) ------
+    u[0] = u[1];
+
+    for (int j = 0; j < mesh.nCellsY+1; j++){
+        u[0][j][1] = -u[1][j][1];
+        u[0][j][6] = -u[1][j][6];
+        u[0][j][9] = -u[1][j][9];
+    }
+
+    // right (transmissive)
+    u[mesh.nCellsX + 1] = u[mesh.nCellsX];
+
+}
+
+
 void PeriodicBCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
 
     //settings BCs for each inner vector (y direction)

@@ -46,5 +46,21 @@ double get_coll_coeff_en(double& n_i, double& n_n, double& m_i, double& m_n, dou
 /* returns the e-i alpha collision coefficient */
 double get_coll_coeff_ei(double n_e, double& n_i, double& coulombLog, double& T);
 
+// non scaled versions
+
+double get_coll_freq_in_noScale(double& n_n, double& m_i, double& m_n, double& T);
+
+double get_coll_freq_en_noScale(double n_n, double& m_i, double& m_n, double& T);
+
+double get_coll_freq_ei_noScale(double& n_i, double& coulombLog, double& T);
+
+double get_coll_coeff_in_noScale(double& n_i, double& n_n, double& m_i, double m_n, double& T);
+
+double get_coll_coeff_en_noScale(double& n_i, double& n_n, double& m_i, double& m_n, double& T);
+
+double get_coll_coeff_ei_noScale(double n_e, double& n_i, double& coulombLog, double& T);
+
+
+
 
 #endif

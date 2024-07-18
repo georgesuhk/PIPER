@@ -173,6 +173,7 @@ void Simulation::sourceUpdates(double input_dt){
             exSourceUpdateCounter += 1;
             for (SourceFuncEx& sourceFuncEx : explicitSourceFuncs){
                 explicitSolver(u, sysPtr, mesh, source_dt_ex, sourceFuncEx, BC);
+                sysPtr->getEoSPtr()->cacheAll(u, mesh);
             }
         }
 
@@ -181,6 +182,7 @@ void Simulation::sourceUpdates(double input_dt){
 
         for (implicitSource& source : implicitSources){
             source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
+            sysPtr->getEoSPtr()->cacheAll(u, mesh);
         }
     }
 }

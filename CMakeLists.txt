@@ -75,6 +75,16 @@ set_target_properties(EoSConstruct PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT
 target_link_libraries(EoSConstruct PUBLIC baseLib classesLib otherLib mutation++)
 
 # resisCompare
-add_executable(resisCompare ${PROJECT_SOURCE_DIR}/src/construct/resisCompare.cpp)
+add_executable(resisCompare ${PROJECT_SOURCE_DIR}/src/construct/study/resisCompare.cpp)
 set_target_properties(resisCompare PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(resisCompare PUBLIC baseLib classesLib mutation++)
+
+# collRateStudy (1D)
+add_executable(collRateStudy ${PROJECT_SOURCE_DIR}/src/construct/study/collRateStudy.cpp)
+set_target_properties(collRateStudy PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(collRateStudy PUBLIC baseLib classesLib mutation++)
+
+# collRate2D (2D)
+add_executable(collRate2D ${PROJECT_SOURCE_DIR}/src/construct/study/collRate2D.cpp)
+set_target_properties(collRate2D PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(collRate2D PUBLIC baseLib classesLib mutation++)

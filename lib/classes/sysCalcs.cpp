@@ -11,7 +11,7 @@ double SysCalcs::get_e_Prim(CellVec& uPrim){
 
 double SysCalcs::get_T_Prim(CellVec& uPrim){
 
-    return EoSPtr->get_T(uPrim[0], uPrim[4]);
+    return EoSPtr->interp_T(uPrim[0], uPrim[4]);
 }
 
 double SysCalcs::get_KE_Prim(CellVec& uPrim){
@@ -47,9 +47,14 @@ double SysCalcs::interp_mass_frac_i_Prim(CellVec& uPrim){
 
 // operated on CellVec in conservative form ------
 
-double SysCalcs::get_T(CellVec& u){
+double SysCalcs::get_T(int i, int j){
+    return EoSPtr->get_T(i, j);
+}
+
+double SysCalcs::interp_T(CellVec& u){
+    double rho = u[0];
     double p = get_p(u);
-    return EoSPtr->get_T(u[0], p);
+    return EoSPtr->interp_T(rho, p);
 }
 
 double SysCalcs::get_KE(CellVec& u){
@@ -78,7 +83,7 @@ double SysCalcs::get_e(CellVec& u){
 double SysCalcs::interp_gamma(CellVec& u){
     double rho = u[0];
     double p = get_p(u);
-    return EoSPtr->get_gamma(rho, p);
+    return EoSPtr->interp_gamma(rho, p);
 };
 
 double SysCalcs::get_p(CellVec& u){
@@ -112,6 +117,10 @@ double SysCalcs::interp_mass_frac_n(CellVec& u){
         mass_frac_n += 1e-200;
     }
     return mass_frac_n;
+}
+
+double SysCalcs::get_mass_frac_i(int i, int j){
+    return EoSPtr->get_mass_frac_i(i, j);
 }
 
 double SysCalcs::interp_mass_frac_i(CellVec& u){
@@ -375,7 +384,7 @@ double PIP0_Calcs::get_total_neutral_E(CellVec& u){
     double vn_z = u[3]/rho + mass_frac_i * wz;
 
     double KE_n = get_KE(rho_n, vn_x, vn_y, vn_z);
-    double p_n = n_n * kBScaled * get_T(u);
+    double p_n = n_n * kBScaled * interp_T(u);
     double e_n_plus_p_n = (gamma)/(gamma-1) * p_n;
 
     return KE_n + e_n_plus_p_n;
@@ -564,7 +573,7 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             n_n = get_n_n(u[i][j][0], mass_frac_n);
             m_n = get_m_n();
             m_i = get_m_i();
-            T = get_T(u[i][j]);
+            T = get_T(i, j);
 
             /* calculating collision integrals */
             alpha_in = get_coll_coeff_in(n_i, n_n, m_i, m_n, T);
@@ -572,10 +581,10 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             alpha_n = alpha_in + alpha_en;
 
             /* calculating derivatives */
-            T_x_plus = get_T(u[i+1][j]);
-            T_x_minus = get_T(u[i-1][j]);
-            T_y_plus = get_T(u[i][j+1]);
-            T_y_minus = get_T(u[i][j-1]);
+            T_x_plus = get_T(i+1, j);
+            T_x_minus = get_T(i-1, j);
+            T_y_plus = get_T(i, j+1);
+            T_y_minus = get_T(i, j-1);
 
             mass_frac_i = interp_mass_frac_i(u[i][j]);
             mass_frac_n = 1 - mass_frac_i;

@@ -43,7 +43,9 @@ class SysCalcs {
 
         // Operated on conservative variables -------
         /* returns the temperature*/
-        double get_T(CellVec& u);
+        double get_T(int i, int j);
+
+        double interp_T(CellVec& u);
 
         /* returns total non-magnetic energy (kinetic + internal) */
         double get_E(CellVec& u);
@@ -87,8 +89,10 @@ class SysCalcs {
         /* neutrals */
         double interp_mass_frac_n(CellVec& u);
 
-        /* ions */
+        /* ions */        
         double interp_mass_frac_i(CellVec& u);
+
+        double get_mass_frac_i(int i, int j);
 
         // Mass fractions ------
         

@@ -57,6 +57,16 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
         resis_cache = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
     }
 
+    if (mfi_cache.empty()){
+        // contains ghost cells as usual
+        mfi_cache = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
+    }
+
+    if (T_cache.empty()){
+        // contains ghost cells as usual
+        T_cache = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
+    }
+
     double rho, vx, vy, vz, e, KE, BMag, MagE, p;
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
@@ -72,6 +82,8 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
             p = interp_p(rho, e);
             
             resis_cache[i][j] = interp_Resis(rho, p);
+            mfi_cache[i][j] = interp_mass_frac_i(rho, p);
+            T_cache[i][j] = interp_T(rho, p);
             p_cache[i][j] = p;
         }
     }
@@ -79,7 +91,11 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
 
 // IDEAL GAS EOS ======
 
-double IdealEoS::get_gamma(double& rho, double& p){
+double IdealEoS::get_gamma(int& i, int& j){
+    return gamma;
+}
+
+double IdealEoS::interp_gamma(double& rho, double& p){
     return gamma;
 }
 
@@ -87,9 +103,13 @@ double IdealEoS::get_e(double& rho, double& p){
     return (p / (gamma - 1)) / rho;
 };
 
-double IdealEoS::get_T(double& rho, double& p){
+double IdealEoS::interp_T(double& rho, double& p){
     double n = rho / m;
     return p / (n * kBScaled);
+};
+
+double IdealEoS::get_T(int& i, int& j){
+    return T_cache[i][j];
 };
 
 double IdealEoS::get_p(int& i, int& j){
@@ -113,6 +133,10 @@ double IdealEoS::interp_mass_frac_n(double& rho, double& p){
 };
 
 double IdealEoS::interp_mass_frac_i(double& rho, double& p){
+    return mass_frac_i;
+};
+
+double IdealEoS::get_mass_frac_i(int& i, int& j){
     return mass_frac_i;
 };
 
@@ -186,7 +210,11 @@ double TabEoS::get_e(double& rho, double& p){
     return bilinearInterp(e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
-double TabEoS::get_gamma(double& rho, double& p){
+double TabEoS::get_gamma(int& i, int& j){
+    return gamma_cache[i][j];
+}
+
+double TabEoS::interp_gamma(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
 
@@ -199,7 +227,7 @@ double TabEoS::get_gamma(double& rho, double& p){
     return bilinearInterp(gamma_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
-double TabEoS::get_T(double& rho, double& p){
+double TabEoS::interp_T(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
 
@@ -210,6 +238,10 @@ double TabEoS::get_T(double& rho, double& p){
     double rho_higher = densities[rho_lower_idx + 1];
 
     return bilinearInterp(T_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+double TabEoS::get_T(int& i, int& j){
+    return T_cache[i][j];
 }
 
 double TabEoS::get_Cs(double& rho, double& p){
@@ -248,7 +280,7 @@ double TabEoS::interp_mass_frac_n(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    // return 0.5;
+    // return 0.9;
     return bilinearInterp(mass_frac_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
@@ -262,8 +294,12 @@ double TabEoS::interp_mass_frac_i(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    // return 0.5;
+    // return 0.1;
     return bilinearInterp(mass_frac_i_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+double TabEoS::get_mass_frac_i(int& i, int& j){
+    return mfi_cache[i][j];
 }
 
 

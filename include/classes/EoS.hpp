@@ -21,33 +21,39 @@ class EoS {
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) = 0;
 
-        virtual double get_gamma(double& rho, double& p) = 0;
+        /* returns ratio of specific heats */
+        virtual double interp_gamma(double& rho, double& p) = 0;
+
+        virtual double get_gamma(int& i, int& j) = 0;
 
         /* returns temperature */
-        virtual double get_T(double& rho, double& p) = 0;
+        virtual double interp_T(double& rho, double& p) = 0;
+
+        virtual double get_T(int& i, int& j) = 0;
 
         /* returns pressure */
+        virtual double interp_p(double& rho, double& e) = 0;
+
         virtual double get_p(int& i, int& j) = 0;
 
-        virtual double interp_p(double& rho, double& e) = 0;
- 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) = 0;
 
-        /* returns n_e */
+        /* returns mass fraction of electrons */
         virtual double interp_mass_frac_e(double& rho, double& p) = 0;
 
-        /* returns n_n */
+        /* returns mass fraction of neutrals */
         virtual double interp_mass_frac_n(double& rho, double& p) = 0;
 
-        /* returns n_i */
+        /* returns mass fraction of ions */
         virtual double interp_mass_frac_i(double& rho, double& p) = 0;
 
-        /* returns resistivity */
-        virtual double get_Resis(int& i, int& j) = 0;
+        virtual double get_mass_frac_i(int& i, int& j) = 0;
 
-        /* interp resistivity */
+        /* returns resistivity */
         virtual double interp_Resis(double& rho, double& p);
+
+        virtual double get_Resis(int& i, int& j) = 0;
 
         // CACHING
 
@@ -65,9 +71,12 @@ class EoS {
         string EoSType;
 
         // Caching ------
+        Scalar2D gamma_cache;
         Scalar2D e_cache;
         Scalar2D p_cache;
         Scalar2D resis_cache;
+        Scalar2D mfi_cache;
+        Scalar2D T_cache;
 
     };
 
@@ -82,29 +91,35 @@ class IdealEoS : public EoS {
         /* returns specific internal energy */
         virtual double get_e(double& rho, double& p) override;
 
-        /* returns adiabatic index / ratio of specific heats */
-        double get_gamma(double& rho, double& p) override;
+        /* returns adiabatic index / ratio of specific heats through interpolation */
+        double interp_gamma(double& rho, double& p) override;
+
+        /* returns adiabatic index from cached values */
+        double get_gamma(int& i, int& j) override;
 
         /* returns temperature */
-        virtual double get_T(double& rho, double& p) override;
+        virtual double interp_T(double& rho, double& p) override;
+
+        virtual double get_T(int& i, int& j) override;
 
         /* returns pressure */
-        virtual double get_p(int& i, int& j) override;
-
-        /* interps pressure */
         virtual double interp_p(double& p, double& e) override;
+
+        virtual double get_p(int& i, int& j) override;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
-        /* returns n_e */
+        /* returns mfe */
         virtual double interp_mass_frac_e(double& rho, double& p) override;
 
-        /* returns n_n */
+        /* returns mfn */
         virtual double interp_mass_frac_n(double& rho, double& p) override;
 
-        /* returns n_i */
+        /* returns mfi */
         virtual double interp_mass_frac_i(double& rho, double& p) override;
+
+        virtual double get_mass_frac_i(int& i, int& j) override;
 
         /* returns resistivity */
         virtual double get_Resis(int& i, int& j) override;
@@ -155,10 +170,14 @@ class TabEoS : public EoS{
         virtual double get_e(double& rho, double& p) override;
 
         /* returns adiabatic index / ratio of specific heats */
-        double get_gamma(double& rho, double& p) override;
+        double interp_gamma(double& rho, double& p) override;
+
+        double get_gamma(int& i, int& j) override;
 
         /* returns temperature */
-        virtual double get_T(double& rho, double& p) override;
+        virtual double interp_T(double& rho, double& p) override;
+
+        virtual double get_T(int& i, int& j) override;
 
         /* returns pressure */
         virtual double get_p(int& i, int& j) override;
@@ -169,14 +188,16 @@ class TabEoS : public EoS{
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
 
-        /* returns n_e */
+        /* returns mfe */
         virtual double interp_mass_frac_e(double& rho, double& p) override;
 
-        /* returns n_n */
+        /* returns mfn */
         virtual double interp_mass_frac_n(double& rho, double& p) override;
 
-        /* returns n_i */
+        /* returns mfi */
         virtual double interp_mass_frac_i(double& rho, double& p) override;
+
+        virtual double get_mass_frac_i(int& i, int& j) override;
 
         /* returns resistivity*/
         virtual double get_Resis(int& i, int& j) override;

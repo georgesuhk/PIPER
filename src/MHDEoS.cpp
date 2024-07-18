@@ -4,7 +4,7 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_2/";
+string dataFolder = "./EoSData/HFusion4_S1/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
@@ -12,12 +12,11 @@ string resultsFolder = "./output/MHDEoS/";
 const int cellVarsNums = 12;
 // const int cellVarsNums = 9;
 
-double gammaFac = 5.0/3.0;
 double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 200, nCellsY = 2;
+int nCellsX = 300, nCellsY = 2;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.1;
 
@@ -26,24 +25,25 @@ int maxSteps = 10000;
 
 // initial conditions ------
 
-double rho_SF = 0.061;
-double p_SF = 100.0;
+double rho_SF = 8e-8;
+double p_SF = 1e-4;
 vector<double> interfacePositions = {0.5};
 vector<CellVec> initCellVecs = BrioWuPIP;
 
 // source terms ------
 ExplicitSolver explicitSolver = RK4;
-bool doSourceUpdate = true;
+bool doSourceUpdate = false;
 int sourceTimeRatio = 1;
 int impExRatio = 1;
-vector<implicitSource> implicitSources = {ohmic_diffusion};
-// vector<implicitSource> implicitSources = {};
+// vector<implicitSource> implicitSources = {ohmic_diffusion};
+vector<implicitSource> implicitSources = {};
 // vector<SourceFuncEx> exSourceFuncs = {};
 vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // EoS ------
+double gammaFac = 5.0/3.0;
 double constResis = 3;
-double mass_frac_n = 0.5;
+double mass_frac_n = 0.3;
 double mass_frac_i = 1.0 - mass_frac_n;
 
 // divergence cleaning ------
@@ -118,7 +118,6 @@ int main(void){
         } else {
             sim.update_dt();
         }
-
         sim.evolve();
 
         t = sim.getTime();

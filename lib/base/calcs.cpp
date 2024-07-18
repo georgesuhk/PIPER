@@ -41,14 +41,14 @@ double getCoulombLog(double& n_e, double T){
 double get_coll_freq_in(double& n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
-    return coll_freq / sqrt(pAtmos) * 0.0001;
+    return coll_freq / sqrt(pAtmos);
 }
 
 /* returns nu_en, the collision rate between e- and neutrals */
 double get_coll_freq_en(double n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
     double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
-    return coll_freq / sqrt(pAtmos) * 0.0001;
+    return coll_freq / sqrt(pAtmos);
 }
 
 /* returns nu_ei, the collision rate between e- and ions */
@@ -75,6 +75,44 @@ double get_coll_coeff_en(double& n_i, double& n_n, double& m_i, double& m_n, dou
 double get_coll_coeff_ei(double n_e, double& n_i, double& coulombLog, double& T){
     return electronMass * n_e * get_coll_freq_ei(n_i, coulombLog, T) * brag_a0;
 }
+
+// non scaled versions
+
+/* returns nu_in, the collision rate between ions and neutrals */
+double get_coll_freq_in_noScale(double& n_n, double& m_i, double& m_n, double& T){
+    double reduced_m_i_n = get_reduced_mass(m_i, m_n);
+    double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
+    return coll_freq;
+}
+
+/* returns nu_en, the collision rate between e- and neutrals */
+double get_coll_freq_en_noScale(double n_n, double& m_i, double& m_n, double& T){
+    double reduced_m_i_n = get_reduced_mass(m_i, m_n);
+    double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
+    return coll_freq;
+}
+
+/* returns nu_ei, the collision rate between e- and ions */
+double get_coll_freq_ei_noScale(double& n_i, double& coulombLog, double& T){
+    double coll_freq = 3.7e-6 * ( (n_i * coulombLog) / (pow(T, 3.0/2.0)) ) * brag_a0;
+    return coll_freq;
+}
+
+/* returns the i-n alpha collision coefficients in Braginskii 1965 */
+double get_coll_coeff_in_noScale(double& n_i, double& n_n, double& m_i, double m_n, double& T){
+    return m_i * n_i * get_coll_freq_in_noScale(n_n, m_i, m_n, T);
+}
+
+/* returns the e-n alpha collision coefficients in Braginskii 1965 */
+double get_coll_coeff_en_noScale(double& n_i, double& n_n, double& m_i, double& m_n, double& T){
+    return m_i * n_i * get_coll_freq_en_noScale(n_n, m_i, m_n, T);
+}
+
+/* returns the e-i alpha collision coefficients in Braginskii 1965 */
+double get_coll_coeff_ei_noScale(double n_e, double& n_i, double& coulombLog, double& T){
+    return electronMass * n_e * get_coll_freq_ei_noScale(n_i, coulombLog, T) * brag_a0;
+}
+
 
 
 
