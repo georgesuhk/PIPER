@@ -5,7 +5,7 @@ project(PIPER
     LANGUAGES CXX
 )
 
-add_compile_options(-O3) 
+add_compile_options(-fopenmp -O3) 
 # add_compile_options(-Wall -fopenmp -O2) 
 
 

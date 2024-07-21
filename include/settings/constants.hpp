@@ -3,6 +3,9 @@
 
 #include "modules.hpp"
 
+// configs
+extern const int omp_threads;
+
 // constants
 const double pAtmos = 101325.0;
 const double myPI = 3.14159265358979323846;

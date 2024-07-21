@@ -12,7 +12,7 @@ const int cellVarsNums = 9;
 // SETTINGS ------
 
 char delimiter = ' ';
-string folder = "./EoSData/HFusion4_S1/";
+string folder = "./EoSData/HFusion4_S2/";
 double particleMass = protonMass;
 string mixName = "HFusion";
 

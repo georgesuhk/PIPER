@@ -4,31 +4,32 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S1/";
+string dataFolder = "./EoSData/HFusion4_S2/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
 
 const int cellVarsNums = 12;
+const int omp_threads = 12;
 // const int cellVarsNums = 9;
 
 double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 200, nCellsY = 2;
-double xMin = 0, xMax = 1;
+int nCellsX = 300, nCellsY = 2;
+double xMin = -0.1, xMax = 0.3;
 double yMin = 0, yMax = 0.1;
 
-double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF);
-int maxSteps = 10000;
+double tMin = 0, tMax = 1e-8*sqrt(rho_SF)/sqrt(p_SF);
+int maxSteps = 20000000;
 
 // initial conditions ------
 
-double rho_SF = 8e-8;
+double rho_SF = 4e-8;
 double p_SF = 1e-4;
-vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = BrioWuPIP;
+vector<double> interfacePositions = {0};
+vector<CellVec> initCellVecs = slow_shock_PIP;
 
 // source terms ------
 ExplicitSolver explicitSolver = RK4;
@@ -43,7 +44,7 @@ vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 // EoS ------
 double gammaFac = 5.0/3.0;
 double constResis = 3;
-double mass_frac_n = 0.3;
+double mass_frac_n = 0.8;
 double mass_frac_i = 1.0 - mass_frac_n;
 
 // divergence cleaning ------
@@ -58,17 +59,23 @@ shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 // recorder and exporter ------
 double recordingDelayTime = (tMax-tMin)/20;
 Exporter exporter = ExportPIP;
+double simExportDelay = (tMax - tMin)/10;
+bool doInSimExport = true;
 
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 0;
+int forced_step_lim = 5;
 
 /* the ratio to lower time step by */
-double forced_ratio = 0.01;
+double forced_ratio = 1e-6;
+
+// PARALLELISING ------
+int threads = 4;
 
 int main(void){
     // SET UP ======
+    omp_set_dynamic(0); 
 
     Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
@@ -103,14 +110,17 @@ int main(void){
 
     sim.forceRecordAll();
     sim.enableProgressUpdate(0.1);
+    sim.setDoInSimExport(doInSimExport);
+    sim.setExportGap(simExportDelay);
     sim.inform();
 
     // SIMULATION ======
 
-    cout << "Starting simulation. \n\n" << endl;
+    cout << "Starting simulation. Tmax = " << tMax << "\n\n" << endl;
     double t = tMin, step = 1;
 
     while (t <= tMax && step <= maxSteps){
+        
         // forcing smaller time steps in the beginning
         if (step < forced_step_lim){
             double forced_dt = forced_ratio * sim.get_min_dt();
@@ -120,9 +130,9 @@ int main(void){
         }
         sim.evolve();
 
-        t = sim.getTime();
-        step = sim.getStep();
-        cout << "t: " << t << endl;
+        t += sim.get_dt();
+        cout << "t: " << sim.getTime() << endl;
+        cout << "dt: " << sim.get_dt() << endl;
     }
 
     cout << "Simulation Completed." << endl;

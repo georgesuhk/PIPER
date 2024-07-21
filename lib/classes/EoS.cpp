@@ -68,6 +68,8 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
     }
 
     double rho, vx, vy, vz, e, KE, BMag, MagE, p;
+
+    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
     for (int i = 0; i < mesh.nCellsX+2; i++){
         for (int j = 0; j < mesh.nCellsY+2; j++){
             rho = u[i][j][0];
@@ -299,7 +301,7 @@ double TabEoS::interp_mass_frac_i(double& rho, double& p){
 }
 
 double TabEoS::get_mass_frac_i(int& i, int& j){
-    return mfi_cache[i][j];
+    return mfi_cache[i][j] += 1e-20;
 }
 
 

@@ -52,7 +52,7 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
     double mag_prefac, mag_term_x, mag_term_y, mag_term_z;
     double p_prefac, p_term_x, p_term_y, p_term_z;
 
-
+    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
             CellVec cellVec(12, 0);
@@ -76,11 +76,26 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             T_y_minus = sysPtr->get_T(i, j-1);
 
             mass_frac_i = sysPtr->get_mass_frac_i(i, j);
-            mass_frac_n = 1 - mass_frac_i;
+            mass_frac_n = (1 - mass_frac_i);
             mfi_x_plus = sysPtr->get_mass_frac_i(i+1, j);
             mfi_x_minus = sysPtr->get_mass_frac_i(i-1, j);
             mfi_y_plus = sysPtr->get_mass_frac_i(i, j+1);
             mfi_y_minus = sysPtr->get_mass_frac_i(i, j-1);
+
+            // T = sysPtr->interp_T(u[i][j]);
+
+            // T_x_plus = sysPtr->interp_T(u[i+1][j]);
+            // T_x_minus = sysPtr->interp_T(u[i-1][j]);
+            // T_y_plus = sysPtr->interp_T(u[i][j+1]);
+            // T_y_minus = sysPtr->interp_T(u[i][j-1]);
+
+            // mass_frac_i = sysPtr->interp_mass_frac_i(u[i][j]);
+            // mass_frac_n = (1 - mass_frac_i);
+            // mfi_x_plus = sysPtr->interp_mass_frac_i(u[i+1][j]);
+            // mfi_x_minus = sysPtr->interp_mass_frac_i(u[i-1][j]);
+            // mfi_y_plus = sysPtr->interp_mass_frac_i(u[i][j+1]);
+            // mfi_y_minus = sysPtr->interp_mass_frac_i(u[i][j-1]);
+
 
             /* components of the convective derivative */
 
@@ -193,7 +208,7 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
 
 
             // assembling
-            double dampFac = coll_term_prefac * 0.0;
+            double dampFac = coll_term_prefac * 1;
 
             // cellVec[9] = - v_dot_nabla_w_x - w_dot_nabla_v_x - (1 - 2*mass_frac_i) * w_dot_nabla_w_x + wx * w_dot_d_mfi + mag_term_x + p_term_x - dampFac * wx;
             // cellVec[10] = - v_dot_nabla_w_y - w_dot_nabla_v_y - (1 - 2*mass_frac_i) * w_dot_nabla_w_y + wy * w_dot_d_mfi + mag_term_y + p_term_y - dampFac * wy;

@@ -194,7 +194,7 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         vz = u[1][j][3] / rho;
 
         /* pressure (power balance)*/
-        p = sysPtr->get_p(u[1][j]);
+        p = sysPtr->get_p(1, j);
 
         // assembling
 
@@ -264,7 +264,7 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         uPrim[2] = 0;
         uPrim[3] = 0;
         // uPrim[4] = p;
-        uPrim[4] = sysPtr->get_p(u[mesh.nCellsX][j]);
+        uPrim[4] = sysPtr->get_p(mesh.nCellsX, j);
         uPrim[5] = u[mesh.nCellsX][j][5];
         uPrim[6] = u[mesh.nCellsX][j][6];
         uPrim[7] = u[mesh.nCellsX][j][7];

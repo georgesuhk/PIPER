@@ -16,6 +16,7 @@
 #include <iomanip>
 #include <typeinfo>
 #include <chrono>
+#include <omp.h>
 
 using namespace std;
 

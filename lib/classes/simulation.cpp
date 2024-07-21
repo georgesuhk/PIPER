@@ -83,6 +83,10 @@ double Simulation::get_min_dt(){
     return evolverPtr->getTimeStep(mesh);
 }
 
+double Simulation::get_dt(){
+    return dt;
+}
+
 void Simulation::update_dt(){
     dt = get_min_dt();
 }
@@ -91,6 +95,13 @@ void Simulation::force_set_dt(double input_dt){
     dt = input_dt;
 }
 
+void Simulation::setDoInSimExport(bool input){
+    doInSimExport = input;
+}
+
+void Simulation::setExportGap(double input){
+    exportTimeGap = input;
+}
 
 
 void Simulation::evolve(){
@@ -147,6 +158,17 @@ void Simulation::evolve(){
 
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
+
+
+    // IN SIM EXPORT ======
+    if (doInSimExport){
+        exportCounter += dt;
+        if (exportCounter > exportTimeGap){
+            cout << "Exporting results" << endl;
+            exportAll(resultsFolder);
+            exportCounter = 0;
+        }
+    }
 
     // cout << u[round(mesh.nCellsX/2)][2] << endl;
 }

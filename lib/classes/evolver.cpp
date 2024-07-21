@@ -32,7 +32,8 @@ void Evolver::evolveMat(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, dou
     if (axis == 'x'){
         updateFlux(u, sysPtr, mesh, dt, 'x');
 
-        for (int i = 1; i < mesh.nCellsX+1; i++){
+        // for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int& i : cellMask){
             for (int j = 1; j < mesh.nCellsY+1; j++){
 
                 // updating each variable
@@ -51,7 +52,7 @@ void Evolver::evolveMat(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, dou
     } else if (axis == 'y'){
         updateFlux(u, sysPtr, mesh, dt, 'y');
 
-        for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int& i : cellMask){
             for (int j = 1; j < mesh.nCellsY+1; j++){
 
                 // updating each variable
@@ -170,6 +171,8 @@ void SLICEvolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh
     Vec2D fluxSLIC = makeVec2D(mesh.nCellsX+2, mesh.nCellsY+2);
 
     array<double, 2> DCFlux;
+
+    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
     for (int i = 1; i < mesh.nCellsX+2; i++){
         for (int j = 1; j < mesh.nCellsY+2; j++){
             for (int var = 0; var < (cellVarsNums); var++){
@@ -189,6 +192,87 @@ void SLICEvolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh
                 }
             }
         }
+    }
+
+    flux = fluxSLIC;
+}
+
+
+// SLIC SOIN EVOLVER FUNCTIONS ======
+
+void SLIC_SOIN_Evolver::setW(double inputW){
+    w = inputW;
+}
+
+double SLIC_SOIN_Evolver::getW(){
+    return w;
+}
+
+void SLIC_SOIN_Evolver::setLimiter(Limiter inputLimFunc){
+    limFunc = inputLimFunc;
+}
+
+Limiter SLIC_SOIN_Evolver::getLimiter(){
+    return limFunc;
+}
+
+
+void SLIC_SOIN_Evolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis){
+    /* signifies that the cell has no flux */
+    bool noFlux = true;
+
+    vector<double> cellMaskNew;
+
+    //reconstruction
+    array<Vec2D,2> uRecon = slopeRecon(u, mesh, w, axis, sysPtr, limFunc, evolverBCFunc);
+
+    //local half step update
+    array<Vec2D,2> uHS = reconHS(uRecon[0], uRecon[1], sysPtr, mesh, dt, axis, evolverBCFunc);
+
+    //calculating component (LF and RI) fluxes
+    Vec2D fluxLF = getFluxLF(uHS[0], uHS[1], sysPtr, mesh, dt, axis);
+    Vec2D fluxRI = getFluxRI(uHS[0], uHS[1], sysPtr, mesh, dt, axis);
+
+    //combining to make SLIC
+    Vec2D fluxSLIC = makeVec2D(mesh.nCellsX+2, mesh.nCellsY+2);
+
+    array<double, 2> DCFlux;
+
+    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
+    for (int& i : cellMask){
+        for (int j = 1; j < mesh.nCellsY+2; j++){
+            for (int var = 0; var < (cellVarsNums); var++){
+                fluxSLIC[i][j][var] = 0.5 * ( fluxLF[i][j][var] + fluxRI[i][j][var] );
+
+                // divergence cleaning functionality
+                if (doDC){
+                    if (axis == 'x'){
+                        DCFlux = getDCFlux(u[i-1][j], u[i][j], ch, axis);
+                        fluxSLIC[i][j][5] = DCFlux[0];
+                        fluxSLIC[i][j][8] = DCFlux[1];          
+                    } else if (axis == 'y'){
+                        DCFlux = getDCFlux(u[i][j-1], u[i][j], ch, axis);
+                        fluxSLIC[i][j][6] = DCFlux[0];
+                        fluxSLIC[i][j][8] = DCFlux[1];  
+                    }
+                }
+
+                if (fluxSLIC[i][j][var] != 0){
+                    noFlux = false;
+                }
+            }
+
+            /* SOIN functions */
+            if (noFlux != true){
+                cellMaskNew.push_back(i);
+            }
+
+            noFlux = true;
+        }
+    }
+
+    if (cellMaskNew.back() < mesh.nCellsX){
+        cellMaskNew.push_back(cellMaskNew.back()+1);
     }
 
     flux = fluxSLIC;

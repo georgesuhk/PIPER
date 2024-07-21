@@ -60,6 +60,9 @@ class Evolver {
         // whether Divergence Cleaning is enabled
         bool doDC = false;
 
+        // flux adjustment mask
+        vector<int> cellMask;
+
 
         // FLUXES ======
 
@@ -94,7 +97,29 @@ class FORCEEvolver : public Evolver{
 class SLICEvolver : public Evolver{
     public:
         SLICEvolver(BCFunc inputBCFunc): 
-        Evolver(inputBCFunc){evolverType = "SLIC"; Cnum = 0.8;};
+        Evolver(inputBCFunc){evolverType = "SLIC"; Cnum = 0.0001;};
+
+        /* Override for how flux is updated */
+        void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;
+
+        void setW(double inputW);
+        double getW();
+
+        void setLimiter(Limiter inputLimFunc);
+        Limiter getLimiter();
+
+    protected:
+        double w = 1;
+        Limiter limFunc = vanLeer;
+};
+
+
+
+// SLIC (Slope LImited Centered) Scheme EVOLVER
+class SLIC_SOIN_Evolver : public Evolver{
+    public:
+        SLIC_SOIN_Evolver(BCFunc inputBCFunc, Mesh2D& mesh): 
+        Evolver(inputBCFunc){evolverType = "SLIC"; Cnum = 0.0001; cellMask = range(0,mesh.nCellsX,1);};
 
         /* Override for how flux is updated */
         void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;

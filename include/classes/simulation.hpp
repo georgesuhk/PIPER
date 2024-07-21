@@ -66,8 +66,11 @@ class Simulation {
 
         // FUNCTIONALITY ======
 
-        /* returns the minimum dt across all the evolvers in the simulation */
+        /* calculates and returns the minimum dt across all the evolvers in the simulation */
         double get_min_dt();
+
+        /* simply returns the dt value stored in the sim */
+        double get_dt();
 
         /* updates the stored dt with min dt */
         void update_dt();
@@ -89,6 +92,9 @@ class Simulation {
 
         /* export all recorded states */
         void exportAll(string resultsFolder);
+
+        void setDoInSimExport(bool input);
+        void setExportGap(double input);
 
 
 
@@ -186,6 +192,10 @@ class Simulation {
         double giveProgressUpdate = false;
         double progressUpdateCounter = 0;
         double progressUpdateTime;
+
+        bool doInSimExport = false;
+        double exportCounter = 0;
+        double exportTimeGap = 1e50;
 };
 
 #endif
