@@ -11,7 +11,7 @@ class Evolver {
     public:
         Evolver(){};
 
-        Evolver(BCFunc inputBCFunc): evolverBCFunc(inputBCFunc){};
+        Evolver(BCFunc inputBCFunc, Mesh2D& mesh): evolverBCFunc(inputBCFunc){cellMask = range(1,mesh.nCellsX,1);};
 
         /* evolves the material to the next time step */
         void evolveMat(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis);
@@ -84,8 +84,8 @@ class Evolver {
 // FORCE (First ORder CEntered ) Scheme EVOLVER
 class FORCEEvolver : public Evolver{
     public:
-        FORCEEvolver(BCFunc inputBCFunc): 
-        Evolver(inputBCFunc){evolverType = "FORCE"; Cnum = 0.8;};
+        FORCEEvolver(BCFunc inputBCFunc, Mesh2D& mesh): 
+        Evolver(inputBCFunc, mesh){evolverType = "FORCE"; Cnum = 0.8;};
 
         /* Override for how flux is updated */
         void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;
@@ -96,8 +96,8 @@ class FORCEEvolver : public Evolver{
 // SLIC (Slope LImited Centered) Scheme EVOLVER
 class SLICEvolver : public Evolver{
     public:
-        SLICEvolver(BCFunc inputBCFunc): 
-        Evolver(inputBCFunc){evolverType = "SLIC"; Cnum = 0.0001;};
+        SLICEvolver(BCFunc inputBCFunc, Mesh2D& mesh): 
+        Evolver(inputBCFunc, mesh){evolverType = "SLIC"; Cnum = 0.5;};
 
         /* Override for how flux is updated */
         void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;
@@ -119,7 +119,7 @@ class SLICEvolver : public Evolver{
 class SLIC_SOIN_Evolver : public Evolver{
     public:
         SLIC_SOIN_Evolver(BCFunc inputBCFunc, Mesh2D& mesh): 
-        Evolver(inputBCFunc){evolverType = "SLIC"; Cnum = 0.0001; cellMask = range(0,mesh.nCellsX,1);};
+        Evolver(inputBCFunc, mesh){evolverType = "SLIC_SOIN"; Cnum = 0.0001;};
 
         /* Override for how flux is updated */
         void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;

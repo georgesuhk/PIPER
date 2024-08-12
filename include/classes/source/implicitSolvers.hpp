@@ -20,5 +20,4 @@ double get_Resis(CellVec& u, int i, int j, shared_ptr<SysCalcs> sysPtr, bool int
 /* Crank-Nicolson implicit solver for the diffusion equation */
 void CN_Diffusion_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
 
-
 #endif

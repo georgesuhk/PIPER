@@ -12,6 +12,11 @@ double getIdealGasDensity(double p, double temp, double particleMass){
     return (particleMass * p) / (kB * temp);
 }
 
+/* returns pressure according to ideal gas equation */
+double getIdealGasPressure(double rho, double temp, double particleMass){
+    return rho * (kB * temp) / particleMass;
+}
+
 /* converts temperature from K to eV */
 double K_to_eV(double T_K){
     return kB * T_K / elementaryCharge;
@@ -35,20 +40,32 @@ double getCoulombLog(double& n_e, double T){
     return output;
 }
 
+double get_n_i(double rho, double mass_frac_i, double m_i){
+    return mass_frac_i * rho / m_i;
+}
+
+double get_n_n(double rho, double mass_frac_n, double m_n){
+    return mass_frac_n * rho / m_n;
+}
+
+double get_n_e(double rho, double mass_frac_e){
+    return mass_frac_e * rho / electronMass;
+}
+
 // Collision rates (nu), scaled by sqrt(pAtmos) due to seconds scaling ------
 
 /* returns nu_in, the collision rate between ions and neutrals */
 double get_coll_freq_in(double& n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
-    double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
-    return coll_freq / sqrt(pAtmos);
+    double coll_freq = n_n * sqrt( (8 * kBScaled * T) / (myPI * reduced_m_i_n) ) * sigma_coll_in;
+    return coll_freq * 100;
 }
 
 /* returns nu_en, the collision rate between e- and neutrals */
 double get_coll_freq_en(double n_n, double& m_i, double& m_n, double& T){
     double reduced_m_i_n = get_reduced_mass(m_i, m_n);
-    double coll_freq = n_n * sqrt( (8 * kB * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
-    return coll_freq / sqrt(pAtmos);
+    double coll_freq = n_n * sqrt( (8 * kBScaled * T) / (myPI * reduced_m_i_n) ) * sigma_coll_en;
+    return coll_freq * 100;
 }
 
 /* returns nu_ei, the collision rate between e- and ions */

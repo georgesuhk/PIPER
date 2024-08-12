@@ -126,12 +126,30 @@ vector<int> range(int start, int end, int gap){
 /* similar to linspace in python*/
 vector<double> linspace(double start, double end, int nPoints){
     vector<double> output;
-    double gap = (end - start)/nPoints;
+    double gap = (end - start)/(nPoints-1);
 
     double value;
 
     for (int i = 0; i < nPoints; i++){
         value = start + i * gap;
+        output.push_back(value);
+    }
+
+    return output;
+}
+
+/* similar to linspace in python but samples exponentially */
+vector<double> linspaceLog(double start, double end, int nPoints){
+    
+    double logEnd = log10(end);
+    double logStart = log10(start);
+    vector<double> xRange = linspace(logStart, logEnd, nPoints);
+    
+    vector<double> output;
+    double value;
+
+    for (int i = 0; i < nPoints; i++){
+        value = pow(10, xRange[i]);
         output.push_back(value);
     }
 

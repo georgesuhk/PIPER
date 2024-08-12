@@ -32,8 +32,7 @@ void Evolver::evolveMat(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, dou
     if (axis == 'x'){
         updateFlux(u, sysPtr, mesh, dt, 'x');
 
-        // for (int i = 1; i < mesh.nCellsX+1; i++){
-        for (int& i : cellMask){
+        for (int i = 1; i < mesh.nCellsX+1; i++){
             for (int j = 1; j < mesh.nCellsY+1; j++){
 
                 // updating each variable
@@ -45,7 +44,15 @@ void Evolver::evolveMat(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, dou
                 if (doDC){
                     uNext[i][j][8] = paraUpdatePsi(uNext[i][j][8], ch, dt);
                 }
+
+                // // tampering 
+                // if (i > mesh.nCellsX-3){
+                //     uNext[i][j][4] = u[i][j][4]; 
+                // }
             }
+            
+            // cout << "energy diff i = " << i << ": " << uNext[i][1][4] - u[i][1][4] << endl;
+
         }
 
     //Y update -------------
@@ -171,8 +178,9 @@ void SLICEvolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh
     Vec2D fluxSLIC = makeVec2D(mesh.nCellsX+2, mesh.nCellsY+2);
 
     array<double, 2> DCFlux;
+    int omp_chunks = round(mesh.nCellsX/omp_threads);
 
-    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
+    #pragma omp parallel for schedule(static, omp_chunks) num_threads(omp_threads)
     for (int i = 1; i < mesh.nCellsX+2; i++){
         for (int j = 1; j < mesh.nCellsY+2; j++){
             for (int var = 0; var < (cellVarsNums); var++){
@@ -220,8 +228,9 @@ Limiter SLIC_SOIN_Evolver::getLimiter(){
 void SLIC_SOIN_Evolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis){
     /* signifies that the cell has no flux */
     bool noFlux = true;
+    int largest_i = 0;
 
-    vector<double> cellMaskNew;
+    vector<int> cellMaskNew;
 
     //reconstruction
     array<Vec2D,2> uRecon = slopeRecon(u, mesh, w, axis, sysPtr, limFunc, evolverBCFunc);
@@ -238,8 +247,7 @@ void SLIC_SOIN_Evolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D
 
     array<double, 2> DCFlux;
 
-    #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
-    for (int& i : cellMask){
+    for (int i = 1; i < mesh.nCellsX+2; i++){
         for (int j = 1; j < mesh.nCellsY+2; j++){
             for (int var = 0; var < (cellVarsNums); var++){
                 fluxSLIC[i][j][var] = 0.5 * ( fluxLF[i][j][var] + fluxRI[i][j][var] );
@@ -257,23 +265,27 @@ void SLIC_SOIN_Evolver::updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D
                     }
                 }
 
-                if (fluxSLIC[i][j][var] != 0){
+                if (fabs(fluxSLIC[i][j][var]) > 1e-4){
+                    cout << "var: " << var << endl;
+                    // cout << "i: " << i << endl;
+                    cout << fluxSLIC[i][j][var] << endl;
                     noFlux = false;
                 }
             }
-
-            /* SOIN functions */
-            if (noFlux != true){
-                cellMaskNew.push_back(i);
-            }
-
-            noFlux = true;
         }
+        /* SOIN functions */
+        if (noFlux != true){
+            cellMaskNew.push_back(i);
+            largest_i = i;
+        }
+
+        noFlux = true;
     }
 
-    if (cellMaskNew.back() < mesh.nCellsX){
-        cellMaskNew.push_back(cellMaskNew.back()+1);
-    }
+    // if (largest_i < mesh.nCellsX){
+    //     cellMaskNew.push_back(largest_i + 1);
+    // }
 
+    cellMask = cellMaskNew;
     flux = fluxSLIC;
 }

@@ -10,6 +10,9 @@ double getIdealGasTemp(double rho, double p, double particleMass);
 /* returns density according to ideal gas equation */
 double getIdealGasDensity(double p, double temp, double particleMass);
 
+/* returns pressure according to the ideal gas equation */
+double getIdealGasPressure(double rho, double temp, double particleMass);
+
 /* returns the standard reduced mass */
 double get_reduced_mass(double m1, double m2);
 
@@ -18,6 +21,16 @@ double K_to_eV(double T_K);
 
 /* returns the Coulomb logarithm */
 double getCoulombLog(double& n_e, double T);
+
+/* returns the number density of ions */
+double get_n_i(double rho, double mass_frac_i, double m_i);
+
+/* returns the number density of neutrals */
+double get_n_n(double rho, double mass_frac_n, double m_n);
+
+/* returns the number density of electrons */
+double get_n_e(double rho, double mass_frac_e);
+
 
 
 // COLLISION RATES (nu) ======

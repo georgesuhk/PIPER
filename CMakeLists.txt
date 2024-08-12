@@ -60,11 +60,26 @@ add_executable(MHDEoS ${PROJECT_SOURCE_DIR}/src/MHDEoS.cpp)
 set_target_properties(MHDEoS PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(MHDEoS PUBLIC baseLib classesLib mutation++)
 
+# orzag
+add_executable(orzag ${PROJECT_SOURCE_DIR}/src/orzag.cpp)
+set_target_properties(orzag PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(orzag PUBLIC baseLib classesLib mutation++)
+
 # detachment
 add_executable(detachment ${PROJECT_SOURCE_DIR}/src/detachment.cpp)
 set_target_properties(detachment PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(detachment PUBLIC baseLib classesLib mutation++)
 
+# detachmentScan
+add_executable(detachmentScan ${PROJECT_SOURCE_DIR}/src/detachmentScan.cpp)
+set_target_properties(detachmentScan PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(detachmentScan PUBLIC baseLib classesLib mutation++)
+
+
+# MHDMulti
+add_executable(MHDMulti ${PROJECT_SOURCE_DIR}/src/MHDMulti.cpp)
+set_target_properties(MHDMulti PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(MHDMulti PUBLIC baseLib classesLib mutation++)
 
 
 # EXECUTABLES FOR CONSTRUCTION --------------------------------------------
@@ -87,4 +102,9 @@ target_link_libraries(collRateStudy PUBLIC baseLib classesLib mutation++)
 # collRate2D (2D)
 add_executable(collRate2D ${PROJECT_SOURCE_DIR}/src/construct/study/collRate2D.cpp)
 set_target_properties(collRate2D PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
-target_link_libraries(collRate2D PUBLIC baseLib classesLib mutation++)
+target_link_libraries(collRate2D PUBLIC baseLib classesLib otherLib mutation++)
+
+# resisFinder 
+add_executable(resisFinder ${PROJECT_SOURCE_DIR}/src/construct/study/resisFinder.cpp)
+set_target_properties(resisFinder PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(resisFinder PUBLIC baseLib classesLib otherLib mutation++)

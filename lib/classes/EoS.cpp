@@ -68,6 +68,8 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
     }
 
     double rho, vx, vy, vz, e, KE, BMag, MagE, p;
+    double resis_total = 0;
+    double resis;
 
     #pragma omp parallel for schedule(dynamic) num_threads(omp_threads)
     for (int i = 0; i < mesh.nCellsX+2; i++){
@@ -89,6 +91,7 @@ void EoS::cacheAll(Vec2D& u, Mesh2D& mesh){
             p_cache[i][j] = p;
         }
     }
+
 }
 
 // IDEAL GAS EOS ======
@@ -128,10 +131,6 @@ double IdealEoS::get_Cs(double& rho, double& p){
 
 double IdealEoS::interp_mass_frac_e(double& rho, double& p){
     return mass_frac_e;
-};
-
-double IdealEoS::interp_mass_frac_n(double& rho, double& p){
-    return mass_frac_n;
 };
 
 double IdealEoS::interp_mass_frac_i(double& rho, double& p){
@@ -195,7 +194,8 @@ double TabEoS::get_p(int& i, int& j){
 
 double TabEoS::interp_p(double& rho, double& e){
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
-    return BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-5, 200);  
+    double p =  BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-5, 200); 
+    return p;
 };
 
 
@@ -272,19 +272,6 @@ double TabEoS::interp_mass_frac_e(double& rho, double& p){
     return bilinearInterp(mass_frac_e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
-double TabEoS::interp_mass_frac_n(double& rho, double& p){
-    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
-    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
-
-    double p_lower = pressures[p_lower_idx];
-    double p_higher = pressures[p_lower_idx + 1];
-
-    double rho_lower = densities[rho_lower_idx];
-    double rho_higher = densities[rho_lower_idx + 1];
-
-    // return 0.9;
-    return bilinearInterp(mass_frac_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
-}
 
 double TabEoS::interp_mass_frac_i(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
@@ -295,8 +282,7 @@ double TabEoS::interp_mass_frac_i(double& rho, double& p){
 
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
-
-    // return 0.1;
+    // return 0.4;
     return bilinearInterp(mass_frac_i_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
@@ -319,7 +305,8 @@ double TabEoS::interp_Resis(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    double resis = bilinearInterp(resis_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    // double resis = bilinearInterp(resis_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    double resis = 1.5;
     return resis;
 
 }

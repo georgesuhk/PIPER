@@ -8,6 +8,7 @@ using namespace Mutation::Thermodynamics;
 using namespace Mutation::Transport; 
  
 const int cellVarsNums = 12;
+const int omp_threads = 4;
 
 // SETTINGS ------
 
@@ -19,10 +20,11 @@ string outputFolder = "../Calc/PIP/collRateStudy/p_n_T/";
 // ROUNDING ------
 double roundFactor = 1.0e8;
 
-int nPoints = 500;
+int nPoints_T = 1000;
+int nPoints_P = 1000;
 
 int tempStart = 5000, tempEnd = 20000;
-int pStart = 0.0001 * 101325, pEnd = 0.001*101325;
+int pStart = 1, pEnd = 0.1*101325;
 
 string change_var = "p";
 
@@ -30,34 +32,40 @@ int main(void){
 
     // creating temp range ======
 
-    vector<double> tempRange = linspace(tempStart, tempEnd, nPoints);
-    vector<double> pRange = linspace(pStart, pEnd, nPoints);
+    vector<double> tempRange = linspace(tempStart, tempEnd, nPoints_T);
+    vector<double> pRange = linspaceLog(pStart, pEnd, nPoints_P);
     Mixture mix(mixName);
+
+
 
     // creating storage ======
 
-    Scalar2D mfi_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D mfn_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D n_e_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D n_n_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D n_i_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D coll_freq_in_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D coll_freq_en_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D coll_freq_ei_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D cLog_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D alpha_in_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D alpha_en_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D alpha_ei_table = makeScalar2D(nPoints, nPoints);
+    Scalar2D mfi_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D mfn_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D n_e_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D n_n_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D n_i_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D coll_freq_in_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D coll_freq_en_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D coll_freq_ei_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D cLog_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D alpha_in_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D alpha_en_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D alpha_ei_table = makeScalar2D(nPoints_P, nPoints_T);
 
-    Scalar2D gamma_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D resis_table = makeScalar2D(nPoints, nPoints);
-    Scalar2D density_table = makeScalar2D(nPoints, nPoints);
+    Scalar2D gamma_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D resis_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D density_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D thermCon_ei_table = makeScalar2D(nPoints_P, nPoints_T);
+    Scalar2D thermCon_in_table = makeScalar2D(nPoints_P, nPoints_T);
+
+
 
     double temp, p;
     
-    for (int pIdx = 0; pIdx < nPoints; pIdx++){
-        for (int tempIdx = 0; tempIdx < nPoints; tempIdx++){
-            cout << "\rProgress: " << pIdx << "/" << nPoints << "     " <<std::flush;
+    for (int pIdx = 0; pIdx < nPoints_P; pIdx++){
+        for (int tempIdx = 0; tempIdx < nPoints_T; tempIdx++){
+            cout << "\rProgress: " << pIdx << "/" << nPoints_P << "     " <<std::flush;
 
             temp = tempRange[tempIdx];
             p = pRange[pIdx];
@@ -86,6 +94,10 @@ int main(void){
             double gamma = mix.mixtureEquilibriumGamma();
             double resis = 1/mix.electricConductivity();
 
+            double thermCon_ei = 3.9 * (n_i * kB * temp) / (coll_freq_ei * protonMass);
+            double thermCon_in = 3.9 * (n_i * kB * temp) / (coll_freq_in * protonMass);
+
+
             mfi_table[pIdx][tempIdx] = mass_frac_i;
             mfn_table[pIdx][tempIdx] = mass_frac_n;
             n_e_table[pIdx][tempIdx] = n_e;
@@ -101,6 +113,8 @@ int main(void){
             gamma_table[pIdx][tempIdx] = gamma;
             resis_table[pIdx][tempIdx] = resis;
             density_table[pIdx][tempIdx] = density;
+            thermCon_ei_table[pIdx][tempIdx] = thermCon_ei;
+            thermCon_in_table[pIdx][tempIdx] = thermCon_in;
 
         }
     }
@@ -123,6 +137,9 @@ int main(void){
     easyExport(gamma_table, "gamma", outputFolder);
     easyExport(resis_table, "resis", outputFolder);
     easyExport(density_table, "density", outputFolder);
+    easyExport(thermCon_ei_table, "thermCon_ei", outputFolder);
+    easyExport(thermCon_in_table, "thermCon_in", outputFolder);
+    
 
     return 0; 
 }

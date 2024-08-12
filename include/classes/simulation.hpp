@@ -96,6 +96,9 @@ class Simulation {
         void setDoInSimExport(bool input);
         void setExportGap(double input);
 
+        /* returns a Scalar2D object with all the cell values for a particular variable */
+        Scalar2D get_u_var(int varIdx);
+
 
 
         // INFORMATION AND DEBUGGING ======

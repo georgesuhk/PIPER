@@ -117,12 +117,12 @@ void BohmBCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         rho = u[mesh.nCellsX][j][0];
 
         /* mass fractions */
-        mass_frac_n = sysPtr->interp_mass_frac_n(u[mesh.nCellsX][j]);
         mass_frac_i = sysPtr->interp_mass_frac_i(u[mesh.nCellsX][j]);
+        mass_frac_n = 1 - mass_frac_i;
 
         /* number densities */
-        n_n = sysPtr->get_n_n(rho, mass_frac_n);
-        n_i = sysPtr->get_n_i(rho, mass_frac_i);
+        n_n = get_n_n(rho, mass_frac_n, sysPtr->get_m_n());
+        n_i = get_n_i(rho, mass_frac_i, sysPtr->get_m_i());
 
         // creating BC values
 
@@ -182,40 +182,41 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
      * resembles a constant upstream heat flux
      */
     
-    for (int j = 0; j < mesh.nCellsY+2; j++){
-        CellVec uPrim(cellVarsNums, 0);
+    // for (int j = 0; j < mesh.nCellsY+2; j++){
+    //     CellVec uPrim(cellVarsNums, 0);
 
-        // information from last cell
+    //     // information from last cell
 
-        /* density */
-        rho = u[1][j][0];
-        vx = u[1][j][1] / rho;
-        vy = u[1][j][2] / rho;
-        vz = u[1][j][3] / rho;
+    //     /* density */
+    //     rho = u[1][j][0];
+    //     vx = u[1][j][1] / rho;
+    //     vy = u[1][j][2] / rho;
+    //     vz = u[1][j][3] / rho;
 
-        /* pressure (power balance)*/
-        p = sysPtr->get_p(1, j);
+    //     /* pressure (power balance)*/
+    //     p = sysPtr->interp_p(u[1][j]);
 
-        // assembling
+    //     // assembling
 
-        uPrim[0] = rho;
-        uPrim[1] = -vx;
-        uPrim[2] = vy;
-        uPrim[3] = vz;
-        uPrim[4] = p;
-        uPrim[5] = u[1][j][5];
-        uPrim[6] = u[1][j][6];
-        uPrim[7] = u[1][j][7];
-        uPrim[8] = u[1][j][8];
-        // w BCs
-        uPrim[9] = u[1][j][9];
-        uPrim[10] = u[1][j][10];
-        uPrim[11] = u[1][j][11];
-        u[0][j] = sysPtr->primToConserv(uPrim);
-    }
+    //     uPrim[0] = rho;
+    //     uPrim[1] = -vx;
+    //     uPrim[2] = vy;
+    //     uPrim[3] = vz;
+    //     uPrim[4] = p;
+    //     uPrim[5] = u[1][j][5];
+    //     uPrim[6] = u[1][j][6];
+    //     uPrim[7] = u[1][j][7];
+    //     uPrim[8] = u[1][j][8];
+    //     // w BCs
+    //     uPrim[9] = -u[1][j][9];
+    //     uPrim[10] = u[1][j][10];
+    //     uPrim[11] = u[1][j][11];
+    //     u[0][j] = sysPtr->primToConserv(uPrim);
+
+    // }
     
     // override to set left BC as constant
-    // u[0] = uLeftInit;
+    u[0] = uLeftInit;
 
 
 
@@ -234,12 +235,12 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         rho = u[mesh.nCellsX][j][0];
 
         /* mass fractions */
-        mass_frac_n = sysPtr->interp_mass_frac_n(u[mesh.nCellsX][j]);
         mass_frac_i = sysPtr->interp_mass_frac_i(u[mesh.nCellsX][j]);
+        mass_frac_n = 1 - mass_frac_i;
 
         /* number densities */
-        n_n = sysPtr->get_n_n(rho, mass_frac_n);
-        n_i = sysPtr->get_n_i(rho, mass_frac_i);
+        n_n = get_n_n(rho, mass_frac_n, sysPtr->get_m_n());
+        n_i = get_n_i(rho, mass_frac_i, sysPtr->get_m_i());
 
         // creating BC values
 
@@ -253,7 +254,7 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         vz = 0;
 
         /* pressure (power balance) */
-        E0 = sysPtr->get_E(uLeftInit[j]);
+        E0 = sysPtr->get_E(u[1][j]);
         e = (E0 - sysPtr->get_KE(rho, vx, vy, vz)) / rho;
         p = sysPtr->getEoSPtr()->interp_p(rho, e);
 
@@ -263,8 +264,9 @@ void BohmBCs2(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
         uPrim[1] = vx;
         uPrim[2] = 0;
         uPrim[3] = 0;
-        // uPrim[4] = p;
-        uPrim[4] = sysPtr->get_p(mesh.nCellsX, j);
+        uPrim[4] = p;
+        // uPrim[4] = sysPtr->interp_p(u[mesh.nCellsX][j]);
+        // uPrim[4] = uRightInit[j][4];
         uPrim[5] = u[mesh.nCellsX][j][5];
         uPrim[6] = u[mesh.nCellsX][j][6];
         uPrim[7] = u[mesh.nCellsX][j][7];

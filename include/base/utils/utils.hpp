@@ -28,5 +28,7 @@ vector<int> range(int start, int end, int gap);
 /* Similar to python np.linspace() */
 vector<double> linspace(double start, double end, int nPoints);
 
+/* Similar to python np.linspace() but samples expoentially */
+vector<double> linspaceLog(double start, double end, int nPoints);
 
 #endif

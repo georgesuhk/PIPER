@@ -42,9 +42,6 @@ class EoS {
         /* returns mass fraction of electrons */
         virtual double interp_mass_frac_e(double& rho, double& p) = 0;
 
-        /* returns mass fraction of neutrals */
-        virtual double interp_mass_frac_n(double& rho, double& p) = 0;
-
         /* returns mass fraction of ions */
         virtual double interp_mass_frac_i(double& rho, double& p) = 0;
 
@@ -112,9 +109,6 @@ class IdealEoS : public EoS {
 
         /* returns mfe */
         virtual double interp_mass_frac_e(double& rho, double& p) override;
-
-        /* returns mfn */
-        virtual double interp_mass_frac_n(double& rho, double& p) override;
 
         /* returns mfi */
         virtual double interp_mass_frac_i(double& rho, double& p) override;
@@ -190,9 +184,6 @@ class TabEoS : public EoS{
 
         /* returns mfe */
         virtual double interp_mass_frac_e(double& rho, double& p) override;
-
-        /* returns mfn */
-        virtual double interp_mass_frac_n(double& rho, double& p) override;
 
         /* returns mfi */
         virtual double interp_mass_frac_i(double& rho, double& p) override;

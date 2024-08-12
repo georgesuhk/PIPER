@@ -9,6 +9,8 @@ using namespace Mutation;
 using namespace Mutation::Thermodynamics;
 using namespace Mutation::Transport; 
 
-double BisectSolverEoS(double& rho, double& p, double& particleMass, Mixture& mix, double atol, double rtol, int maxSteps, double searchTol);
+double BisectSolverEoS_T(double& rho, double& p, double& particleMass, Mixture& mix, double atol, double rtol, int maxSteps, double searchTol);
+
+double BisectSolverEoS_P(double& rho, double& temp, double& particleMass, Mixture& mix, double atol, double rtol, int maxSteps, double searchTol);
 
 #endif

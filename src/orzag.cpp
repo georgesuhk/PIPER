@@ -1,13 +1,11 @@
-#include "init.hpp"
+#include "orzagInit.hpp"
 #include "testCases.hpp"
 #include "simulation.hpp"
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S1_1/";
-string resultsFolder = "./output/MHDEoS/";
-// string resultsFolder = "./output/MHDEoS/stored/report/RJ_drift_300cells/rho1.65e-7_cfl0.5_collFac0.1/";
-
+string dataFolder = "./EoSData/HFusion4_S1/";
+string resultsFolder = "./output/orzag/";
 // choosing system ------
 
 const int cellVarsNums = 12;
@@ -18,33 +16,34 @@ double mass = 1.67e-27;
 
 // setting grid ------
 
-int nCellsX = 400, nCellsY = 2;
-double xMin = 0, xMax = 1.0;
-double yMin = 0, yMax = 0.1;
+int nCellsX = 128, nCellsY = 128;
+double xMin = 0, xMax = 1;
+double yMin = 0, yMax = 1;
 
-double tMin = 0, tMax = 0.1*sqrt(rho_SF)/sqrt(p_SF);
+double tMin = 0, tMax = 0.5*sqrt(rho_SF)/sqrt(p_SF);
+
 int maxSteps = 1e6;
 Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
 // initial conditions ------
 
-double rho_SF = 1.212e-7;
+double rho_SF = 1e-7;
 double p_SF = 1e-4;
-vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = BrioWuPIP;
+double gammaFac = 5.0/3.0;
+
+vector<double> initParams = {gammaFac};
 
 // source terms ------
 ExplicitSolver explicitSolver = RK4;
 bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
-int impExRatio = 40;
+int impExRatio = 1;
 vector<implicitSource> implicitSources = {ohmic_diffusion};
 // vector<implicitSource> implicitSources = {};
-// vector<SourceFuncEx> exSourceFuncs = {};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+vector<SourceFuncEx> exSourceFuncs = {};
+// vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // EoS ------
-double gammaFac = 5.0/3.0;
 double constResis = 3;
 double mass_frac_n = 0.8;
 double mass_frac_i = 1.0 - mass_frac_n;
@@ -54,7 +53,7 @@ bool doDC = true;
 
 // evolver & BCs ------
 
-BCFunc BC = TransBCs;
+BCFunc BC = PeriodicBCs;
 SLICEvolver evolver(BC, mesh);
 shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 
@@ -62,15 +61,15 @@ shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 double recordingDelayTime = (tMax-tMin)/20;
 Exporter exporter = ExportPIP;
 double simExportDelay = (tMax - tMin)/20;
-bool doInSimExport = true;
+bool doInSimExport = false;
 
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 10;
+int forced_step_lim = 0;
 
 /* the ratio to lower time step by */
-double forced_ratio = 1e-5;
+double forced_ratio = 1e-3;
 
 int main(void){
     // SET UP ======
@@ -92,7 +91,7 @@ int main(void){
     // FIPCalcs sysCalcs(EoSPtr);
     // shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
 
-    Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
+    Vec2D uInit = initOrzag(initParams, mesh, sysPtr, BC);
     Recorder recorder;
     recorder.setDelayTime(recordingDelayTime);
     shared_ptr<Recorder> recorderPtr = make_shared<Recorder>(recorder);

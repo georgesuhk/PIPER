@@ -6,6 +6,7 @@
 
 // externally defined initial state, used in some BCs which hold one side fixed
 extern Vec1D uLeftInit;
+extern Vec1D uRightInit;
 
 
 typedef void (*BCFunc)(Vec2D&, Mesh2D&, shared_ptr<SysCalcs>);

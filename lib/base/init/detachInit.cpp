@@ -2,6 +2,7 @@
 
 
 Vec1D uLeftInit;
+Vec1D uRightInit;
 
 Vec2D initDetachment(vector<double>& initParams, string& mixName, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BCFunc){
     Vec2D uInit = makeVec2D(mesh.nCellsX + 2, mesh.nCellsY + 2);
@@ -33,7 +34,6 @@ Vec2D initDetachment(vector<double>& initParams, string& mixName, Mesh2D& mesh, 
         mix.equilibrate(temp, pSI);
 
         for (int j = 1; j < mesh.nCellsY+1; j++){
-
             rho = mix.density();
             vx = 0;
             vy = 0;
@@ -51,6 +51,7 @@ Vec2D initDetachment(vector<double>& initParams, string& mixName, Mesh2D& mesh, 
     }
     uInit[0] = uInit[1];
     uLeftInit = uInit[0];
+    uRightInit = uInit[mesh.nCellsX];
     BCFunc(uInit, mesh, sysPtr);
     return uInit;
 }

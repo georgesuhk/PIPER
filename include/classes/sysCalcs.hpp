@@ -30,9 +30,6 @@ class SysCalcs {
         /* returns bulk flow kinetic energy*/
         double get_KE_Prim(CellVec& uPrim);
 
-        /* returns mass fraction of neutrals */
-        double interp_mass_frac_n_Prim(CellVec& uPrim);
-
         /* returns mass fraction of ions */
         double interp_mass_frac_i_Prim(CellVec& uPrim);
 
@@ -89,9 +86,6 @@ class SysCalcs {
         /* electrons */
         double interp_mass_frac_e(CellVec& u);
 
-        /* neutrals */
-        double interp_mass_frac_n(CellVec& u);
-
         /* ions */        
         double interp_mass_frac_i(CellVec& u);
 
@@ -100,12 +94,6 @@ class SysCalcs {
         double get_mass_frac_i(int i, int j);
 
         // Mass fractions ------
-        
-        /* neutrals */
-        double get_n_n(double rho, double mass_frac_n);
-
-        /* ions */
-        double get_n_i(double rho, double mass_frac_i);
 
 
         /* converts CellVec from conservative form to primitive form */
@@ -207,6 +195,7 @@ class PIP0_Calcs : public SysCalcs{
 
         // Operated on conservative variables -------
         virtual CellVec conservToPrim(CellVec& u) override;
+        double get_vix(CellVec& u);
 
         /* returns the kinectic + internal energy for neutrals only */
         double get_total_neutral_E(CellVec& u);
@@ -220,6 +209,7 @@ class PIP0_Calcs : public SysCalcs{
         // WAVE CALCULATIONS ======
         virtual double getFastestWaveSpeed(CellVec& u) override;
 
+
         // OTHER ======
 
         /* calculates and sets w within u based on the no inertial approximation */
@@ -228,5 +218,42 @@ class PIP0_Calcs : public SysCalcs{
     protected:
         int cellVecLen = 12; // number of variables stored for a cell, local to this sysCalc   
 };
+
+
+
+// // TWO FLUID PARTIALLY IONISED PLASMA
+
+// /**
+//  * PIP_0:
+//  * Frame for PIP systems
+//  * Non-conductive
+//  * Ignores inertia in dw/dt, i.e. uses w is not evolved explicitly
+//  */
+// class PIP2F_Calcs : public SysCalcs{
+//     public:
+//         PIP2F_Calcs(shared_ptr<EoS> inputEoSPtr):SysCalcs(inputEoSPtr){sysName = "PIP2F";};
+
+
+//         // STATE VARIABLE EVALUATION & CONVERSIONS ======
+//         // operated on primitive variables ------
+//         virtual CellVec primToConserv(CellVec& uPrim) override;
+//         double get_KE_Prim_neutral(CellVec& uPrim);
+//         double get_E_Prim_neutral(CellVec& uPrim);
+
+//         // Operated on conservative variables -------
+//         virtual CellVec conservToPrim(CellVec& u) override;
+//         array<double,2> get_p_2F(CellVec& u);
+
+//         // FLUX FUNCTIONS ======
+//         virtual CellVec f(CellVec& u, int i, int j, bool interp = false) override;
+//         virtual CellVec g(CellVec& u, int i, int j, bool interp = false) override;
+
+//         // WAVE CALCULATIONS ======
+//         virtual double getFastestWaveSpeed(CellVec& u) override;
+
+
+//     protected:
+//         int cellVecLen = 14; // number of variables stored for a cell, local to this sysCalc   
+// };
 
 #endif

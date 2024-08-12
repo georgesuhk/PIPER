@@ -132,13 +132,11 @@ void Simulation::evolve(){
 
     // EVOLVE MATERIALS - Strang Splitting ======
 
+
     /* source term evolution - S^(t/2) */
     if (doSourceUpdate){
         sourceUpdates(dt/2);
     }
-
-    /* explicitly setting w for no inertia approx */
-    // sysPtr->set_w_no_inert(u, mesh);
 
     /* conservative update - C^(t)*/
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'x');
@@ -147,14 +145,13 @@ void Simulation::evolve(){
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'y');
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
+    /* explicitly setting w for no inertia approx */
+    // sysPtr->set_w_no_inert(u, mesh);
+
     /* source term evolution - S^(t/2) */
     if (doSourceUpdate){
         sourceUpdates(dt/2);
     }
-
-    /* explicitly setting w for no inertia approx */
-    // sysPtr->set_w_no_inert(u, mesh);
-
 
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
@@ -195,7 +192,7 @@ void Simulation::sourceUpdates(double input_dt){
             exSourceUpdateCounter += 1;
             for (SourceFuncEx& sourceFuncEx : explicitSourceFuncs){
                 explicitSolver(u, sysPtr, mesh, source_dt_ex, sourceFuncEx, BC);
-                sysPtr->getEoSPtr()->cacheAll(u, mesh);
+                // sysPtr->getEoSPtr()->cacheAll(u, mesh);
             }
         }
 
@@ -204,7 +201,7 @@ void Simulation::sourceUpdates(double input_dt){
 
         for (implicitSource& source : implicitSources){
             source(u, sysPtr, mesh, source_dt_imp, diffBC, BC);
-            sysPtr->getEoSPtr()->cacheAll(u, mesh);
+            // sysPtr->getEoSPtr()->cacheAll(u, mesh);
         }
     }
 }
@@ -215,6 +212,18 @@ void Simulation::forceRecordAll(){
 
 void Simulation::exportAll(string resultsFolder){
     recorderPtr->exportData(exporter, mesh, sysPtr, resultsFolder);
+}
+
+Scalar2D Simulation::get_u_var(int varIdx){
+    Scalar2D uOut = makeScalar2D(mesh.nCellsX+2, mesh.nCellsY+2);
+
+    for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int j = 1; j < mesh.nCellsY+1; j++){
+            uOut[i][j] = u[i][j][varIdx];
+        }
+    }
+
+    return uOut;
 }
 
 
@@ -263,17 +272,6 @@ void Simulation::informFinished(){
     cout << "\n\nSimulation complete." << endl;
     //could add exporting here
 }
-
-
-
-
-// CONTROL ======
-
-void forceTimeStep(double input_dt){
-
-}
-
-
 
 
 // OTHER SYSTEMS ======

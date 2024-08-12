@@ -32,12 +32,6 @@ double SysCalcs::get_U(CellVec& uPrim){
     return get_E_Prim(uPrim) + get_MagE(uPrim);
 };
 
-double SysCalcs::interp_mass_frac_n_Prim(CellVec& uPrim){
-    double rho = uPrim[0];
-    double p = uPrim[4];
-    return EoSPtr->interp_mass_frac_n(rho, p);
-}
-
 double SysCalcs::interp_mass_frac_i_Prim(CellVec& uPrim){
     double rho = uPrim[0];
     double p = uPrim[4];
@@ -113,16 +107,6 @@ double SysCalcs::interp_mass_frac_e(CellVec& u){
     return EoSPtr->interp_mass_frac_e(rho, p);
 }
 
-double SysCalcs::interp_mass_frac_n(CellVec& u){
-    double rho = u[0];
-    double p = interp_p(u);
-    double mass_frac_n = EoSPtr->interp_mass_frac_n(rho, p);
-    if (mass_frac_n == 0){
-        mass_frac_n += 1e-200;
-    }
-    return mass_frac_n;
-}
-
 double SysCalcs::get_mass_frac_i(int i, int j){
     return EoSPtr->get_mass_frac_i(i, j);
 }
@@ -131,22 +115,14 @@ double SysCalcs::interp_mass_frac_i(CellVec& u){
     double rho = u[0];
     double p = interp_p(u);
     double mass_frac_i = EoSPtr->interp_mass_frac_i(rho, p);
-    if (mass_frac_i == 0){
-        mass_frac_i += 1e-200;
-    }
-    return mass_frac_i;
+    // if (mass_frac_i == 0){
+    //     mass_frac_i += 1e-200;
+    // }
+    return mass_frac_i + 1e-200;
 }
 
 double SysCalcs::interp_mass_frac_i(double& rho, double& p){
     return EoSPtr->interp_mass_frac_i(rho, p);
-}
-
-double SysCalcs::get_n_n(double rho, double mass_frac_n){
-    return mass_frac_n * rho / m_n;
-}
-
-double SysCalcs::get_n_i(double rho, double mass_frac_i){
-    return mass_frac_i * rho / m_i;
 }
 
 double SysCalcs::get_Resis(CellVec& u, int i, int j, bool interp){
@@ -384,8 +360,8 @@ double PIP0_Calcs::get_total_neutral_E(CellVec& u){
     double wy = u[10];
     double wz = u[11];
     double mass_frac_i = interp_mass_frac_i(u);
-    double mass_frac_n = interp_mass_frac_n(u);
-    double n_n = get_n_n(rho, mass_frac_n);
+    double mass_frac_n = 1 - mass_frac_i;
+    double n_n = get_n_n(rho, mass_frac_n, m_n);
     double gamma = interp_gamma(u);
     double rho_n = rho * mass_frac_n;
     
@@ -445,8 +421,8 @@ CellVec PIP0_Calcs::f(CellVec& u, int i, int j, bool interp){
     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
 
     // PIP modifications
-    double mass_frac_n = interp_mass_frac_n(u);
     double mass_frac_i = interp_mass_frac_i(u);
+    double mass_frac_n = 1-mass_frac_i;
 
     f_out[0] = rho * vx;
     f_out[1] = rho * pow(vx, 2.0) - rho * mass_frac_i * mass_frac_n * pow(wx, 2.0) + p + MagE - pow(Bx, 2.0);
@@ -496,8 +472,8 @@ CellVec PIP0_Calcs::g(CellVec& u, int i, int j, bool interp){
     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
 
     // PIP modifications
-    double mass_frac_n = interp_mass_frac_n(u);
     double mass_frac_i = interp_mass_frac_i(u);
+    double mass_frac_n = 1 - mass_frac_i;
 
     g_out[0] = rho * vy;
     g_out[1] = rho * vy * vx - By * Bx - rho * mass_frac_i * mass_frac_n * wy * wx;
@@ -513,13 +489,15 @@ CellVec PIP0_Calcs::g(CellVec& u, int i, int j, bool interp){
     g_out[10] = 0;
     g_out[11] = 0;
 
-
-    // g_out[9] = (1 / (mass_frac_i * rho)) * (By * Bx);
-    // g_out[10] = - (1 / (mass_frac_i * rho)) * (MagE - pow(By, 2.0));
-    // g_out[11] = (1 / (mass_frac_i * rho)) * (By * Bz);
-
     return g_out;
 };
+
+double PIP0_Calcs::get_vix(CellVec& u){
+    double vx = u[1]/u[0];
+    double wx = u[9];
+    double mass_frac_n = 1 - interp_mass_frac_i(u);
+    return vx + mass_frac_n * wx;
+}
 
 // fastest wave speed taking into account of w
 double PIP0_Calcs::getFastestWaveSpeed(CellVec& u){
@@ -534,9 +512,9 @@ double PIP0_Calcs::getFastestWaveSpeed(CellVec& u){
     double a_x = fabs(vx) + get_Cf(u, 'x');
     double a_y = fabs(vy) + get_Cf(u, 'y');
     double a_z = fabs(vz) + get_Cf(u, 'z');
-    double aw_x = fabs(wx) + fabs(a_x);
-    double aw_y = fabs(wy) + fabs(a_y);
-    double aw_z = fabs(wz) + fabs(a_z);
+    double aw_x = (fabs(wx) + fabs(a_x)) * 2;
+    double aw_y = (fabs(wy) + fabs(a_y)) * 2;
+    double aw_z = (fabs(wz) + fabs(a_z)) * 2;
 
     double a_array[] = {aw_x, aw_y, aw_z}; 
     double a = *max_element(begin(a_array), end(a_array));
@@ -580,11 +558,11 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
 
             mass_frac_i = interp_mass_frac_i(u[i][j]);
             mass_frac_n = 1 - mass_frac_i;
-            n_i = get_n_i(u[i][j][0], mass_frac_i);
-            n_n = get_n_n(u[i][j][0], mass_frac_n);
+            n_i = get_n_i(u[i][j][0], mass_frac_i, m_i);
+            n_n = get_n_n(u[i][j][0], mass_frac_n, m_n);
             m_n = get_m_n();
             m_i = get_m_i();
-            T = get_T(i, j);
+            T = interp_T(u[i][j]);
 
             /* calculating collision integrals */
             alpha_in = get_coll_coeff_in(n_i, n_n, m_i, m_n, T);
@@ -592,10 +570,10 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             alpha_n = alpha_in + alpha_en;
 
             /* calculating derivatives */
-            T_x_plus = get_T(i+1, j);
-            T_x_minus = get_T(i-1, j);
-            T_y_plus = get_T(i, j+1);
-            T_y_minus = get_T(i, j-1);
+            T_x_plus = interp_T(u[i+1][j]);
+            T_x_minus = interp_T(u[i-1][j]);
+            T_y_plus = interp_T(u[i][j+1]);
+            T_y_minus = interp_T(u[i][j-1]);
 
             mass_frac_i = interp_mass_frac_i(u[i][j]);
             mass_frac_n = 1 - mass_frac_i;
@@ -605,11 +583,11 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             mfi_y_minus = interp_mass_frac_i(u[i][j-1]);
 
             /* partial pressure derivatives */
-            d_pn_dx = kBScaled * ( get_n_n(u[i+1][j][0], 1-mfi_x_plus) * T_x_plus - get_n_n(u[i-1][j][0], 1-mfi_x_minus) * T_x_minus) / two_dx;
-            d_pn_dy = kBScaled * ( get_n_n(u[i][j+1][0], 1-mfi_y_plus) * T_y_plus - get_n_n(u[i][j-1][0], 1-mfi_y_minus) * T_y_minus) / two_dy;
+            d_pn_dx = kBScaled * ( get_n_n(u[i+1][j][0], 1-mfi_x_plus, m_n) * T_x_plus - get_n_n(u[i-1][j][0], 1-mfi_x_minus, m_n) * T_x_minus) / two_dx;
+            d_pn_dy = kBScaled * ( get_n_n(u[i][j+1][0], 1-mfi_y_plus, m_n) * T_y_plus - get_n_n(u[i][j-1][0], 1-mfi_y_minus, m_n) * T_y_minus) / two_dy;
 
-            d_pei_dx = kBScaled * ( 2 * get_n_i(u[i+1][j][0], mfi_x_plus) * T_x_plus - 2 * get_n_i(u[i-1][j][0], mfi_x_minus) * T_x_minus) / two_dx;
-            d_pei_dy = kBScaled * ( 2 * get_n_i(u[i][j+1][0], mfi_y_plus) * T_y_plus - 2 * get_n_i(u[i][j-1][0], mfi_y_minus) * T_y_minus) / two_dy;
+            d_pei_dx = kBScaled * ( 2 * get_n_i(u[i+1][j][0], mfi_x_plus, m_i) * T_x_plus - 2 * get_n_i(u[i-1][j][0], mfi_x_minus, m_i) * T_x_minus) / two_dx;
+            d_pei_dy = kBScaled * ( 2 * get_n_i(u[i][j+1][0], mfi_y_plus, m_i) * T_y_plus - 2 * get_n_i(u[i][j-1][0], mfi_y_minus, m_i) * T_y_minus) / two_dy;
 
             /* Bx derivatives */
             dBx_dx = ( u[i+1][j][5] - u[i-1][j][5] ) / two_dx;
@@ -626,7 +604,7 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             // COMPOUND TERMS 
 
             /* j x B terms */
-            mag_prefac = mass_frac_n / alpha_in;
+            mag_prefac = mass_frac_n / alpha_n;
             mag_term_x = mag_prefac * (By * dBx_dy - By * dBy_dx - Bz * dBz_dx);
             mag_term_y = mag_prefac * (Bx * dBy_dx - Bx * dBx_dy - Bz * dBz_dy);
             mag_term_z = mag_prefac * (Bx * dBz_dx + By * dBz_dy);
@@ -657,15 +635,194 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             u[i][j][10] = - G_y / alpha_n + mag_term_y + J_term_prefac * J_y;
             u[i][j][11] = - G_z / alpha_n + mag_term_z + J_term_prefac * J_z;
 
+
         }
     }
-
-
 
 
 }
 
 
+
+
+// // PIP2F CALCS ======
+
+// double PIP2F_Calcs::get_KE_Prim_neutral(CellVec& uPrim){
+//     return 0.5 * uPrim[9] * ( pow(uPrim[10], 2.0) + pow(uPrim[11], 2.0) + pow(uPrim[12], 2.0) );
+// };
+
+// double PIP2F_Calcs::get_E_Prim_neutral(CellVec& uPrim){
+//     double rho = uPrim[9];
+//     double p = uPrim[13];
+//     double e = EoSPtr->get_e(rho, p);
+//     double KE = get_KE_Prim_neutral(uPrim);
+//     return rho * e + KE;  
+// };
+
+
+// CellVec PIP2F_Calcs::primToConserv(CellVec& uPrim){
+//     CellVec uConserv(cellVecLen, 0);
+
+//     // charged fluid
+//     uConserv[0] = uPrim[0];
+//     uConserv[1] = uPrim[0] * uPrim[1];
+//     uConserv[2] = uPrim[0] * uPrim[2];
+//     uConserv[3] = uPrim[0] * uPrim[3];
+//     uConserv[4] = get_U(uPrim);
+//     uConserv[5] = uPrim[5];
+//     uConserv[6] = uPrim[6];
+//     uConserv[7] = uPrim[7];
+//     uConserv[8] = uPrim[8];
+//     // neutral fluid 
+//     uConserv[9] = uPrim[9]; 
+//     uConserv[10] = uPrim[9] * uPrim[10]; 
+//     uConserv[11] = uPrim[9] * uPrim[11];
+//     uConserv[12] = uPrim[9] * uPrim[12]; 
+//     uConserv[13] = get_E_Prim(uPrim);
+
+//     return uConserv;
+// };
+
+
+// CellVec PIP2F_Calcs::conservToPrim(CellVec& u){
+//     CellVec uPrim(cellVecLen, 0);
+//     array<double,2> pArray = get_p_2F(u);
+
+//     // charged fluid
+//     uPrim[0] = u[0];
+//     uPrim[1] = u[1] / u[0];
+//     uPrim[2] = u[2] / u[0];
+//     uPrim[3] = u[3] / u[0];
+//     uPrim[4] = pArray[0];
+//     uPrim[5] = u[5];
+//     uPrim[6] = u[6];
+//     uPrim[7] = u[7];
+//     uPrim[8] = u[8];
+
+//     // neutral fluid
+//     uPrim[9] = u[9]; 
+//     uPrim[10] = u[10] / u[9]; 
+//     uPrim[11] = u[11] / u[9]; 
+//     uPrim[12] = u[12] / u[9]; 
+//     uPrim[13] = pArray[1]; 
+
+//     return uPrim;
+// };
+
+// CellVec PIP2F_Calcs::f(CellVec& u, int i, int j, bool interp){
+//     CellVec f_out(cellVecLen, 0);
+
+//     double rho = u[0];
+//     double vx = u[1] / rho;
+//     double vy = u[2] / rho;
+//     double vz = u[3] / rho;
+//     double U = u[4];
+//     double Bx = u[5];
+//     double By = u[6];
+//     double Bz = u[7];
+//     double psi = u[8];
+//     double wx = u[9];
+//     double wy = u[10];
+//     double wz = u[11];
+    
+//     double p = interp_p(u);
+//     double E = get_E(u);
+//     double MagE = get_MagE(u);
+//     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
+
+//     // PIP modifications
+//     double mass_frac_i = interp_mass_frac_i(u);
+//     double mass_frac_n = 1-mass_frac_i;
+
+//     f_out[0] = rho * vx;
+//     f_out[1] = rho * pow(vx, 2.0) - rho * mass_frac_i * mass_frac_n * pow(wx, 2.0) + p + MagE - pow(Bx, 2.0);
+//     f_out[2] = rho * vx * vy - rho * mass_frac_i * mass_frac_n * wx * wy - Bx * By;
+//     f_out[3] = rho * vx * vz - rho * mass_frac_i * mass_frac_n * wx * wz - Bx * Bz;
+//     f_out[4] = (U + p + MagE) * vx + (mass_frac_n * (E + p)) * wx - vDotB * Bx; // need to fix energy conservation
+//     f_out[5] = psi;
+//     f_out[6] = By * vx - Bx * vy;
+//     f_out[7] = Bz * vx - Bx * vz;
+//     f_out[8] = 0;
+//     // w flux
+//     f_out[9] = 0;
+//     f_out[10] = 0;
+//     f_out[11] = 0;
+
+
+//     // w evo with mag
+//     // f_out[9] = - (1 / (mass_frac_i * rho)) * (MagE - pow(Bx, 2.0));
+//     // f_out[10] = (1 / (mass_frac_i * rho)) * (Bx * By);
+//     // f_out[11] = (1 / (mass_frac_i * rho)) * (Bx * Bz);
+
+//     //w evo with no mag
+
+//     return f_out;
+// };
+
+// CellVec PIP2F_Calcs::g(CellVec& u, int i, int j, bool interp){
+//     CellVec g_out(cellVecLen, 0);
+
+//     double rho = u[0];
+//     double vx = u[1] / rho;
+//     double vy = u[2] / rho;
+//     double vz = u[3] / rho;
+//     double U = u[4];
+//     double Bx = u[5];
+//     double By = u[6];
+//     double Bz = u[7];
+//     double psi = u[8];
+//     double wx = u[9];
+//     double wy = u[10];
+//     double wz = u[11];
+
+//     double p = interp_p(u);
+//     double E = get_E(u);
+//     double MagE = get_MagE(u);
+//     double vDotB = dotProduct({vx, vy, vz}, {Bx, By, Bz});
+
+//     // PIP modifications
+//     double mass_frac_i = interp_mass_frac_i(u);
+//     double mass_frac_n = 1 - mass_frac_i;
+
+//     g_out[0] = rho * vy;
+//     g_out[1] = rho * vy * vx - By * Bx - rho * mass_frac_i * mass_frac_n * wy * wx;
+//     g_out[2] = rho * pow(vy, 2.0) - rho * mass_frac_i * mass_frac_n * pow(wy, 2.0) + p + MagE - pow(By, 2.0);
+//     g_out[3] = rho * vy * vz - By * Bz - rho * mass_frac_i * mass_frac_n * wy * wz;
+//     g_out[4] = (U + p + MagE) * vy + (mass_frac_n * (E + p)) * wy - vDotB * By;
+//     g_out[5] = Bx * vy - By * vx;
+//     g_out[6] = psi;
+//     g_out[7] = Bz * vy - By * vz;
+//     g_out[8] = 0;
+//     // w flux
+//     g_out[9] = 0;
+//     g_out[10] = 0;
+//     g_out[11] = 0;
+
+//     return g_out;
+// };
+
+// // fastest wave speed taking into account of w
+// double PIP2F_Calcs::getFastestWaveSpeed(CellVec& u){
+
+//     double vx = u[1] / u[0];
+//     double vy = u[2] / u[0];
+//     double vz = u[3] / u[0];
+//     double wx = u[9];
+//     double wy = u[10];
+//     double wz = u[11];
+
+//     double a_x = fabs(vx) + get_Cf(u, 'x');
+//     double a_y = fabs(vy) + get_Cf(u, 'y');
+//     double a_z = fabs(vz) + get_Cf(u, 'z');
+//     double aw_x = (fabs(wx) + fabs(a_x)) * 2;
+//     double aw_y = (fabs(wy) + fabs(a_y)) * 2;
+//     double aw_z = (fabs(wz) + fabs(a_z)) * 2;
+
+//     double a_array[] = {aw_x, aw_y, aw_z}; 
+//     double a = *max_element(begin(a_array), end(a_array));
+
+//     return a;
+// };
 
 
 

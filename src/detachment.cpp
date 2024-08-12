@@ -6,16 +6,25 @@ const int cellVarsNums = 12;
 
 // grid ------
 
-int nCellsX = 50, nCellsY = 2;
+int nCellsX = 30, nCellsY = 2;
 double xMin = 0, xMax = 1;
 double yMin = 0, yMax = 0.2;
-double tMin = 0, tMax = 1.0/sqrt(pAtmos);
+// double tMin = 0, tMax = 0.1/sqrt(pAtmos);
+double tMin = 0, tMax = 15e-7;
+
+// double tMin = 0, tMax = 200e-7;
+
+
+Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
+
 
 // init params ------
 
-double p_SF = 100;
-vector<double> initParams = {1*p_SF, 300000, 5000, 1*sqrt(p_SF), 0};
-int maxSteps = 100000;
+const int omp_threads = 1;
+double rho_SF = 1.8e-7;
+double p_SF = 1e-4;
+vector<double> initParams = {1*p_SF, 200000, 5000, 1*sqrt(p_SF), 0};
+int maxSteps = 1e6;
 
 // EoS ------
 
@@ -34,12 +43,12 @@ int sourceTimeRatio = 1;
 int impExRatio = 1;
 // vector<implicitSource> implicitSources = {ohmic_diffusion};
 vector<implicitSource> implicitSources = {};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+vector<SourceFuncEx> exSourceFuncs = {w_evolution_func, heating};
 
 // evolver & BCs ------
 
 BCFunc BC = BohmBCs2;
-SLICEvolver evolver(BC);
+SLICEvolver evolver(BC, mesh);
 shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 
 // recorder and exporter ------
@@ -51,18 +60,17 @@ Exporter exporter = ExportPIP;
 
 string mixName = "HFusion";
 string resultsFolder = "./output/detachment/";
-string dataFolder = "./EoSData/HFusion4_2/";
+string dataFolder = "./EoSData/HFusion4_S1/";
 
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 100;
+int forced_step_lim = 1e6;
 
 /* the ratio to lower time step by */
-double forced_ratio = 0.01;
+double forced_ratio = 0.0001;
 
 int main(void){
-    Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
     // IdealEoS EoSIdeal(gammaFac, mass);
     // EoSIdeal.set_constResis(constResis);

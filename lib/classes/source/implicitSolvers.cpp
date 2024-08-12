@@ -26,7 +26,7 @@ void CN_Diffusion_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared
     double alpha_y = (dt/2.0) / (2 * pow(mesh.dy, 2.0)); 
 
     /* whether diffusion coefficient should be reinterpreted */
-    bool interp = false; 
+    bool interp = true; 
 
     double b_vec_term;
     vector<double> solution;
