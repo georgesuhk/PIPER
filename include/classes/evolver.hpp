@@ -97,7 +97,7 @@ class FORCEEvolver : public Evolver{
 class SLICEvolver : public Evolver{
     public:
         SLICEvolver(BCFunc inputBCFunc, Mesh2D& mesh): 
-        Evolver(inputBCFunc, mesh){evolverType = "SLIC"; Cnum = 0.5;};
+        Evolver(inputBCFunc, mesh){evolverType = "SLIC"; Cnum = 0.2;};
 
         /* Override for how flux is updated */
         void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;

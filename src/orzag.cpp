@@ -4,7 +4,7 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S1/";
+string dataFolder = "./EoSData/HFusion4_S1_1/";
 string resultsFolder = "./output/orzag/";
 // choosing system ------
 

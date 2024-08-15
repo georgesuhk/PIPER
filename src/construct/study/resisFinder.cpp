@@ -20,7 +20,7 @@ string mixName = "HFusion";
 
 double p = 101325 / 1e4;
 // double p = 10;
-double rho = 1e-7;
+double rho = 1.67e-7;
 double resisScale = 1.0/(sqrt(pAtmos)*vacPermeab);
 
 int main(void){
@@ -77,15 +77,16 @@ int main(void){
     vector<double> eTotalArray = {density * eTotal};
 
     vector<double> densityArray = {density*(mass_frac_i/1836.15), density*mass_frac_n, density*mass_frac_i};
+    vector<double> densityArray2 = {density/1000};
 
     vector<double> tempArray = {temp};
 
-
+    
     
     mix.setState(densityArray.data(), tempArray.data(), 1);
     cout << "pressure from set state: " << mix.P() << endl;
 
-    mix.setState(densityArray.data(), eTotalArray.data(), 0);
+    mix.setState(densityArray2.data(), eTotalArray.data(), 0);
     cout << "pressure from set state: " << mix.P() << endl;
     
     return 0; 

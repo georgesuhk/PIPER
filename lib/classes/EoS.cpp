@@ -305,8 +305,8 @@ double TabEoS::interp_Resis(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    // double resis = bilinearInterp(resis_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
-    double resis = 1.5;
+    double resis = bilinearInterp(resis_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    // double resis = 1.5;
     return resis;
 
 }
