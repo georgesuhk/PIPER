@@ -115,35 +115,6 @@ class SLICEvolver : public Evolver{
 
 
 
-// SLIC (Slope LImited Centered) Scheme EVOLVER
-class SLIC_SOIN_Evolver : public Evolver{
-    public:
-        SLIC_SOIN_Evolver(BCFunc inputBCFunc, Mesh2D& mesh): 
-        Evolver(inputBCFunc, mesh){evolverType = "SLIC_SOIN"; Cnum = 0.0001;};
-
-        /* Override for how flux is updated */
-        void updateFlux(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, char axis) override;
-
-        void setW(double inputW);
-        double getW();
-
-        void setLimiter(Limiter inputLimFunc);
-        Limiter getLimiter();
-
-    protected:
-        double w = 1;
-        Limiter limFunc = vanLeer;
-};
-
-
-
-
-
-
-
-
-
-
 
 
 #endif
