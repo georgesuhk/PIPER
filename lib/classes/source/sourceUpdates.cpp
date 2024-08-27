@@ -17,7 +17,7 @@ void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double
 
     for (int i = 1; i < mesh.nCellsX+1; i++){
         for (int j = 1; j < mesh.nCellsY+1; j++){
-            resistivity = get_Resis(u[i][j], i, j, sysPtr, false);
+            resistivity = get_Resis(u[i][j], i, j, sysPtr, true);
 
             //induction eqn source terms
             laplacianBx = ( u[i+1][j][5] - 2*u[i][j][5] + u[i-1][j][5] )/(mesh.dx) + ( u[i][j+1][5] - 2*u[i][j][5] + u[i][j-1][5] )/(mesh.dy);
@@ -38,4 +38,14 @@ void ohmic_diffusion(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double
 
     BC(u, mesh, sysPtr);
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
+}
+
+
+
+
+/**
+ * Thermal conduction of the bulk fluid
+ */
+void conduction(Vec2D& u, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BC){
+    CN_Conduction_Solver(u, 4, get_therm_con, sysPtr, mesh, dt, diffBCType, BC);
 }

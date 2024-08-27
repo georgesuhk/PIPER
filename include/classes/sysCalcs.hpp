@@ -39,6 +39,7 @@ class SysCalcs {
 
 
         // Operated on conservative variables -------
+
         /* returns the temperature*/
         double get_T(int i, int j);
 
@@ -54,6 +55,9 @@ class SysCalcs {
 
         /* returns the adibatic index / ratio between specific heats */
         double interp_gamma(CellVec& u);
+
+        /* returns thermal conductivity */
+        double interp_therm_con(CellVec& u);
 
         /* returns pressure through interpolation */ 
         double interp_p(CellVec& u);  

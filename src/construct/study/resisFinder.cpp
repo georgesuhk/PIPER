@@ -20,7 +20,7 @@ string mixName = "HFusion";
 
 double p = 101325 / 1e4;
 // double p = 10;
-double rho = 1.67e-7;
+double rho = 8e-8;
 double resisScale = 1.0/(sqrt(pAtmos)*vacPermeab);
 
 int main(void){
@@ -28,7 +28,7 @@ int main(void){
 
     Mixture mix(mixName);
 
-    double temp = BisectSolverEoS_T(rho, p, particleMass, mix, 0.1, 1e-5, 10000, 0.5);
+    double temp = BisectSolverEoS_T(rho, p, particleMass, mix, 0.01, 1e-9, 10000, 0.5);
 
     mix.equilibrate(temp, p);
 
@@ -56,9 +56,18 @@ int main(void){
     double gamma = mix.mixtureEquilibriumGamma();
     double resis_mpp = 1/mix.electricConductivity();
     double resis_Brag = (alpha_en + alpha_ei) / (pow(n_e, 2.0) * pow(elementaryCharge, 2.0));
+    double e = mix.mixtureEnergyMass();
+
 
     cout << "T: " << temp << endl;
     cout << "P: " << p << endl;
+    cout << "rho * e: " << rho * e << endl;
+
+    cout << "n kB T: " << number_density * kB * temp << endl;
+    cout << "approx p: " << (n_n + 2 * n_i) * kB * temp << endl;
+    cout << "approx e: " << ((n_n + 2 * n_i) * kB * temp) / (gamma - 1) << endl;
+
+
     cout << "rho: " << rho << endl;
     cout << "n: " << number_density << endl;
     cout << "mfi: " << mass_frac_i << endl;
@@ -73,8 +82,7 @@ int main(void){
     vector<double> eArray(3);
     mix.getEnergiesMass(eArray.data());
 
-    double eTotal = mix.mixtureEnergyMass();
-    vector<double> eTotalArray = {density * eTotal};
+    vector<double> eTotalArray = {density * e};
 
     vector<double> densityArray = {density*(mass_frac_i/1836.15), density*mass_frac_n, density*mass_frac_i};
     vector<double> densityArray2 = {density/1000};

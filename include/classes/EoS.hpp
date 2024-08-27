@@ -26,6 +26,9 @@ class EoS {
 
         virtual double get_gamma(int& i, int& j) = 0;
 
+        /* returns thermal conductivity */
+        virtual double interp_therm_con(double& rho, double& p) = 0;
+
         /* returns temperature */
         virtual double interp_T(double& rho, double& p) = 0;
 
@@ -91,6 +94,9 @@ class IdealEoS : public EoS {
         /* returns adiabatic index / ratio of specific heats through interpolation */
         double interp_gamma(double& rho, double& p) override;
 
+        /* returns therm con */
+        double interp_therm_con(double& rho, double& p) override;
+
         /* returns adiabatic index from cached values */
         double get_gamma(int& i, int& j) override;
 
@@ -124,6 +130,7 @@ class IdealEoS : public EoS {
         // SETTING VARIABLES ======
         void set_gamma(double inputGamma);
         void set_constResis(double inputResis);
+        void set_constThermCon(double input);
         void set_mass_frac_n(double input_mass_frac);
         void set_mass_frac_i(double input_mass_frac);
     
@@ -134,6 +141,8 @@ class IdealEoS : public EoS {
         double m;
         // resistivity
         double constResis = 0;
+        // thermal conductivity
+        double constThermCon = 0;
         // constant mass fracs
         double mass_frac_e = 0;
         double mass_frac_i = 1.0;
@@ -167,6 +176,9 @@ class TabEoS : public EoS{
         double interp_gamma(double& rho, double& p) override;
 
         double get_gamma(int& i, int& j) override;
+
+        /* returns thermal conductivity */
+        double interp_therm_con(double& rho, double& p) override;
 
         /* returns temperature */
         virtual double interp_T(double& rho, double& p) override;

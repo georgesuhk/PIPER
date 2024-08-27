@@ -305,19 +305,24 @@ double& y1, double& y2, double yLowerIdx){
     double interpResults;
 
     //coefficients used within the interpolation in each direction
-    double xInterpCoeff1 = (x2 - xVar) / (x2 - x1);
-    double xInterpCoeff2 = (xVar - x1) / (x2 - x1);
+    double x1_coeff = (x2 - xVar) / (x2 - x1);
+    double x2_ceoff = (xVar - x1) / (x2 - x1);
 
-    double yInterpCoeff1 = (y2 - yVar) / (y2 - y1);
-    double yInterpCoeff2 = (yVar - y1) / (y2 - y1);
+    double y1_coeff = (y2 - yVar) / (y2 - y1);
+    double y2_coeff = (yVar - y1) / (y2 - y1);
+
+    double q_11 = data[yLowerIdx][xLowerIdx];
+    double q_21 = data[yLowerIdx][xLowerIdx+1];
+    double q_12 = data[yLowerIdx+1][xLowerIdx];
+    double q_22 = data[yLowerIdx+1][xLowerIdx+1];
 
     //for each cellArray var
-    double xInterp1, xInterp2;
+    double q_p1, q_p2;
 
-    xInterp1 = xInterpCoeff1 * data[yLowerIdx][xLowerIdx] + xInterpCoeff2 * data[yLowerIdx+1][xLowerIdx];
-    xInterp2 = xInterpCoeff1 * data[yLowerIdx][xLowerIdx+1] + xInterpCoeff2 * data[yLowerIdx+1][xLowerIdx+1];
+    q_p1 = x1_coeff * q_11 + x2_ceoff * q_21;
+    q_p2 = x1_coeff * q_12 + x2_ceoff * q_22;
 
-    interpResults = yInterpCoeff1 * xInterp1 + yInterpCoeff2 * xInterp2;
+    interpResults = y1_coeff * q_p1 + y2_coeff * q_p2;
 
     return interpResults;
 }
@@ -351,6 +356,7 @@ int getLowerBound(const double& val, array<int,2> activeRange, vector<double>& d
     return idxNeg;
 }
 
+
 /** 
  * Bisection Root Finder used in TabEoS
 */
@@ -361,13 +367,18 @@ double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData,
     double rhoLower = rhoData[rhoLowerIdx];
     double rhoHigher = rhoData[rhoHigherIdx];
 
-    double linIntCoeff = (rho - rhoLower)/(rhoHigher - rhoLower);
+    // coefficients for bilinear interpolation
+    double rho1_coeff = (rhoHigher - rho) / (rhoHigher - rhoLower);
+    double rho2_coeff = (rho - rhoLower) / (rhoHigher - rhoLower);
+
+    double rho_lin_coeff = (rho - rhoLower)/(rhoHigher - rhoLower);
+
 
     double idxNeg = 0;
     double idxPos = pData.size()-1;
+    int idxMid;
 
     double eMid, fMid;
-    int idxMid;
     int step = 0;
 
     while (fabs(idxPos - idxNeg) > 1 && step < maxSteps){
@@ -376,7 +387,7 @@ double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData,
         idxMid = round((idxPos + idxNeg)/2);
 
         //more accurate way
-        eMid = eData[idxMid][rhoLowerIdx] + (eData[idxMid][rhoHigherIdx] - eData[idxMid][rhoLowerIdx]) * linIntCoeff;
+        eMid = eData[idxMid][rhoLowerIdx] + (eData[idxMid][rhoHigherIdx] - eData[idxMid][rhoLowerIdx]) * rho_lin_coeff;
         fMid = eMid - e;
 
         if (fMid < 0){
@@ -386,44 +397,48 @@ double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData,
         }
     }
 
-    //iteratively solve in sub cell level (fractional idx)
-    double fracIdxNeg = idxNeg;
-    double fracIdxPos = idxPos;
-    double fracIdxMid;
-
-        //lin interp terms
-    double x1_term1 = eData[idxNeg][rhoLowerIdx];
-    double x1_term2 = eData[idxPos][rhoLowerIdx] - eData[idxNeg][rhoLowerIdx];
-
-    double x2_term1 = eData[idxNeg][rhoHigherIdx];
-    double x2_term2 = eData[idxPos][rhoHigherIdx] - eData[idxNeg][rhoHigherIdx];
-
-    double biInterpCoeff1 = (rhoHigher - rho) / (rhoHigher - rhoLower);
-    double biInterpCoeff2 = (rho - rhoLower) / (rhoHigher - rhoLower);
-
-    double eMid_x1, eMid_x2;
+    // idxNeg = idxNeg;
+    // idxPos = idxPos;
 
     step = 0;
-    while (fabs(fracIdxNeg - fracIdxPos) > atol && step < maxSteps){
-        step += 1;
-        fracIdxMid = (fracIdxNeg + fracIdxPos)/2;
-        
-        //bilinear interpolate
-        eMid_x1 = x1_term1 + x1_term2 * (fracIdxMid - idxNeg);
-        eMid_x2 = x2_term1 + x2_term2 * (fracIdxMid - idxNeg); 
+    double pGap = pData[idxPos] - pData[idxNeg];
+    double pLower = pData[idxNeg];
+    double pHigher = pData[idxPos];
+    double pMid;
 
-        eMid = biInterpCoeff1 * eMid_x1 + biInterpCoeff2 * eMid_x2;
+    // subscripts here are for rho, then p (opposite to the actual indexing)
+    double e_11 = eData[idxNeg][rhoLowerIdx];
+    double e_21 = eData[idxNeg][rhoHigherIdx];
+    double e_12 = eData[idxPos][rhoLowerIdx];
+    double e_22 = eData[idxPos][rhoHigherIdx];
+
+    double eMid_p1 = rho1_coeff * e_11 + rho2_coeff * e_21;
+    double eMid_p2 = rho1_coeff * e_12 + rho2_coeff * e_22;
+
+    while (fabs(eMid - e) > atol && step < maxSteps){
+        step += 1;
+        pMid = (pLower + pHigher)/2;
+        
+        // cout << "step: " << step << endl;
+        
+        // y linear interpolate coeffs
+        double p1_coeff = (pData[idxPos] - pMid) / pGap;
+        double p2_coeff = (pMid - pData[idxNeg]) / pGap;
+
+        eMid = p1_coeff * eMid_p1 + p2_coeff * eMid_p2;
 
         fMid = eMid - e;
+        // cout << "ediff: " << eMid - e << endl;
 
         if (fMid < 0){
-            fracIdxNeg = fracIdxMid;
+            pLower = pMid;
         } else {
-            fracIdxPos = fracIdxMid;
+            pHigher = pMid;
         }
+        cout << "\n" << endl;
     }
 
-    p = pData[idxNeg] + (pData[idxPos] - pData[idxNeg]) * (fracIdxNeg - idxNeg)/(idxPos - idxNeg);
+    p = (pLower + pHigher)/2;
 
     return p;
 }

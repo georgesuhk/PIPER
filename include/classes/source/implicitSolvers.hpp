@@ -13,11 +13,16 @@ typedef double (*GetCoeffFunc)(CellVec&, int, int, shared_ptr<SysCalcs>, bool);
 /* Returns the resistivity */
 double get_Resis(CellVec& u, int i, int j, shared_ptr<SysCalcs> sysPtr, bool interp);
 
+/* Returns the conductivity */
+double get_therm_con(CellVec& u, int i, int j, shared_ptr<SysCalcs> sysPtr, bool interp);
 
 
 // IMPLICIT SOLVERS ======
 
 /* Crank-Nicolson implicit solver for the diffusion equation */
 void CN_Diffusion_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
+
+/* Crank-Nicolson implicit solver for thermal conduction */
+void CN_Conduction_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
 
 #endif

@@ -9,7 +9,7 @@ extern const int omp_threads;
 // constants
 const double pAtmos = 101325.0;
 const double myPI = 3.14159265358979323846;
-const double kB = 1.38e-23;
+const double kB = 1.380649e-23;
 const double kBScaled = kB / pAtmos;
 const double planckConst = 6.626e-34;
 const double dalton = 1.661e-27;

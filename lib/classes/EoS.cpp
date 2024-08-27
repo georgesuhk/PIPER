@@ -104,6 +104,10 @@ double IdealEoS::interp_gamma(double& rho, double& p){
     return gamma;
 }
 
+double IdealEoS::interp_therm_con(double& rho, double& p){
+    return constThermCon;
+}
+
 double IdealEoS::get_e(double& rho, double& p){
     return (p / (gamma - 1)) / rho;
 };
@@ -157,6 +161,10 @@ void IdealEoS::set_constResis(double inputResis){
     constResis = inputResis;
 };
 
+void IdealEoS::set_constThermCon(double input){
+    constThermCon = input;
+}
+
 void IdealEoS::set_mass_frac_n(double input_mass_frac){
     mass_frac_n = input_mass_frac;
 };
@@ -194,7 +202,7 @@ double TabEoS::get_p(int& i, int& j){
 
 double TabEoS::interp_p(double& rho, double& e){
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
-    double p =  BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-5, 200); 
+    double p =  BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-4, 100); 
     return p;
 };
 
@@ -202,6 +210,9 @@ double TabEoS::interp_p(double& rho, double& e){
 double TabEoS::get_e(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    cout << "p_lower_idx: " << p_lower_idx << endl;
+    cout << "rho_lower_idx: " << rho_lower_idx << endl;
 
     double p_lower = pressures[p_lower_idx];
     double p_higher = pressures[p_lower_idx + 1];
@@ -228,6 +239,21 @@ double TabEoS::interp_gamma(double& rho, double& p){
 
     return bilinearInterp(gamma_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
+
+double TabEoS::interp_therm_con(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return bilinearInterp(thermConduct_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
+
 
 double TabEoS::interp_T(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);

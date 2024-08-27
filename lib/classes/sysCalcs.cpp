@@ -84,6 +84,13 @@ double SysCalcs::interp_gamma(CellVec& u){
     return EoSPtr->interp_gamma(rho, p);
 };
 
+double SysCalcs::interp_therm_con(CellVec& u){
+    double rho = u[0];
+    double p = interp_p(u);
+    // return EoSPtr->interp_therm_con(rho, p);
+    return 0;
+}
+
 double SysCalcs::interp_p(CellVec& u){
     double e = get_e(u);
     return EoSPtr->interp_p(u[0], e);

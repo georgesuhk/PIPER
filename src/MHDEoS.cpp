@@ -4,9 +4,8 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S1_1/";
+string dataFolder = "./EoSData/HFusion4_S1/";
 string resultsFolder = "./output/MHDEoS/";
-// string resultsFolder = "./output/MHDEoS/stored/report/RJ_drift_300cells/rho1.65e-7_cfl0.5_collFac0.1/";
 
 // choosing system ------
 
@@ -14,11 +13,11 @@ const int cellVarsNums = 12;
 const int omp_threads = 1;
 // const int cellVarsNums = 9;
 
-double mass = 1.67e-27;
+double mass = protonMass;
 
 // setting grid ------
 
-int nCellsX = 400, nCellsY = 2;
+int nCellsX = 350, nCellsY = 2;
 double xMin = 0, xMax = 1.0;
 double yMin = 0, yMax = 0.1;
 
@@ -28,7 +27,7 @@ Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
 // initial conditions ------
 
-double rho_SF = 1.212e-7;
+double rho_SF = 1e-9;
 double p_SF = 1e-4;
 vector<double> interfacePositions = {0.5};
 vector<CellVec> initCellVecs = BrioWuPIP;
@@ -37,15 +36,16 @@ vector<CellVec> initCellVecs = BrioWuPIP;
 ExplicitSolver explicitSolver = RK4;
 bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
-int impExRatio = 40;
-vector<implicitSource> implicitSources = {ohmic_diffusion};
+int impExRatio = 1;
+vector<implicitSource> implicitSources = {conduction};
 // vector<implicitSource> implicitSources = {};
-// vector<SourceFuncEx> exSourceFuncs = {};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+vector<SourceFuncEx> exSourceFuncs = {};
+// vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // EoS ------
 double gammaFac = 5.0/3.0;
 double constResis = 3;
+double constThermCon = 0;
 double mass_frac_n = 0.8;
 double mass_frac_i = 1.0 - mass_frac_n;
 
@@ -67,7 +67,7 @@ bool doInSimExport = true;
 // forcing initial time steps ------
 
 /* the step number up until which time step is forced */
-int forced_step_lim = 10;
+int forced_step_lim = 0;
 
 /* the ratio to lower time step by */
 double forced_ratio = 1e-5;
@@ -78,6 +78,7 @@ int main(void){
 
     // IdealEoS EoSIdeal(gammaFac, mass);
     // EoSIdeal.set_constResis(constResis);
+    // EoSIdeal.set_constThermCon(constThermCon);
     // EoSIdeal.set_mass_frac_n(mass_frac_n);
     // EoSIdeal.set_mass_frac_i(mass_frac_i);
     // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
@@ -111,31 +112,43 @@ int main(void){
     sim.setExportGap(simExportDelay);
     sim.inform();
 
-    // SIMULATION ======
+    // testing
 
-    cout << "Starting simulation. Tmax = " << tMax << "\n\n" << endl;
-    double t = tMin, step = 1;
+    // double rho = 1.67e-8;
+    // double e = 26900;
 
-    while (t <= tMax && step <= maxSteps){
+    // double p = sysPtr->getEoSPtr()->interp_p(rho, e);
+    // double e_interp = sysPtr->getEoSPtr()->get_e(rho, p);
+
+    // cout << "p: " << p << endl;
+    // cout << "e_interp: " << e_interp << endl;
+
+
+    // // SIMULATION ======
+
+    // cout << "Starting simulation. Tmax = " << tMax << "\n\n" << endl;
+    // double t = tMin, step = 1;
+
+    // while (t <= tMax && step <= maxSteps){
         
-        // forcing smaller time steps in the beginning
-        if (step < forced_step_lim){
-            double forced_dt = forced_ratio * sim.get_min_dt();
-            sim.force_set_dt(forced_dt);
-        } else {
-            sim.update_dt();
-        }
-        sim.evolve();
+    //     // forcing smaller time steps in the beginning
+    //     if (step < forced_step_lim){
+    //         double forced_dt = forced_ratio * sim.get_min_dt();
+    //         sim.force_set_dt(forced_dt);
+    //     } else {
+    //         sim.update_dt();
+    //     }
+    //     sim.evolve();
 
-        t = sim.getTime();
-        step = sim.getStep();
-        cout << "t: " << t << endl;
-        // cout << "dt: " << sim.get_dt() << endl;
-    }
+    //     t = sim.getTime();
+    //     step = sim.getStep();
+    //     cout << "t: " << t << endl;
+    //     // cout << "dt: " << sim.get_dt() << endl;
+    // }
 
-    cout << "Simulation Completed." << endl;
-    sim.forceRecordAll();
-    sim.exportAll(resultsFolder);
+    // cout << "Simulation Completed." << endl;
+    // sim.forceRecordAll();
+    // sim.exportAll(resultsFolder);
 
     return 0; 
 }

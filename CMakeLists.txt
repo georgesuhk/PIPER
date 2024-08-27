@@ -19,7 +19,7 @@ endif()
 
 # mutationpp -----------------------------------
 set (EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
-include_directories("/home/inferno/Cambridge/Continuum/Project/CFDCode/Mutationpp/install/include/mutation++")
+include_directories("/home/inferno/Cambridge/Continuum/Project/PIPER/Mutationpp/install/include/mutation++")
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(STATUS "EIGEN3_INCLUDE_DIR: ${EIGEN3_INCLUDE_DIR}")
 find_package(mutation++ REQUIRED)
