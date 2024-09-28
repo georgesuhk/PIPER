@@ -42,7 +42,7 @@ bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
 int impExRatio = 1;
 // vector<implicitSource> implicitSources = {ohmic_diffusion};
-vector<implicitSource> implicitSources = {};
+vector<implicitSource> implicitSources = {conduction};
 vector<SourceFuncEx> exSourceFuncs = {w_evolution_func, heating};
 
 // evolver & BCs ------
@@ -79,7 +79,7 @@ int main(void){
     // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
 
     TabEoS EoSTab;
-    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","gamma","resis","thermCon","mass_frac_e","mass_frac_n","mass_frac_i"}, dataFolder, ',');
+    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","e_n","gamma","resis","thermCon","mass_frac_e","mass_frac_n","mass_frac_i"}, dataFolder, ',');
     shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
 
     PIP0_Calcs sysCalcs(EoSPtr);

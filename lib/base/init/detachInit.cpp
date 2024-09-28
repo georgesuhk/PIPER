@@ -16,10 +16,13 @@ Vec2D initDetachment(vector<double>& initParams, string& mixName, Mesh2D& mesh, 
 
     /* target temperature */
     double temp_target = initParams[2];
-    double Bx = initParams[3];
-    double By = initParams[4];
+    double Bx_up = initParams[3];
+    double Bx_target = initParams[4];
+
+    double By = initParams[5];
 
     vector<double> temp_range = linspace(temp_up, temp_target, mesh.nCellsX);
+    vector<double> Bx_range = linspace(Bx_up, Bx_target, mesh.nCellsX);
 
     // scaling
     double CsScale = 1.0/sqrt(pAtmos);
@@ -27,10 +30,11 @@ Vec2D initDetachment(vector<double>& initParams, string& mixName, Mesh2D& mesh, 
     // obtaining bohm boundary conditions
     Mixture mix(mixName);
 
-    double x, y, temp;
+    double x, y, temp, Bx;
     double rho, vx, vy, vz, Bz, psi, wx, wy, wz;
     for (int i = 1; i < mesh.nCellsX+1; i++){
         temp = temp_range[i-1];
+        Bx = Bx_range[i-1];
         mix.equilibrate(temp, pSI);
 
         for (int j = 1; j < mesh.nCellsY+1; j++){

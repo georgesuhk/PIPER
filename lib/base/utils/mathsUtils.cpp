@@ -301,7 +301,7 @@ CellVec bilinearInterp(const Vec2D& u, Mesh2D& mesh, double xPos, double yPos){
 
 
 double bilinearInterp(vector<vector<double>>& data, double& xVar, double& yVar, double& x1, double& x2, double xLowerIdx,
-double& y1, double& y2, double yLowerIdx){
+double& y1, double& y2, double yLowerIdx, bool verbose){
     double interpResults;
 
     //coefficients used within the interpolation in each direction
@@ -321,6 +321,17 @@ double& y1, double& y2, double yLowerIdx){
 
     q_p1 = x1_coeff * q_11 + x2_ceoff * q_21;
     q_p2 = x1_coeff * q_12 + x2_ceoff * q_22;
+
+    if (verbose){
+        cout << "y1_coeff: " << y1_coeff << endl;
+        cout << "y2_coeff: " << y2_coeff << endl;
+
+        cout << "q_p1: " << q_p1 << endl;
+        cout << "q_p2: " << q_p2 << endl;
+    }
+
+
+
 
     interpResults = y1_coeff * q_p1 + y2_coeff * q_p2;
 
@@ -360,7 +371,7 @@ int getLowerBound(const double& val, array<int,2> activeRange, vector<double>& d
 /** 
  * Bisection Root Finder used in TabEoS
 */
-double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData, Scalar2D& eData, Scalar1D pData, double atol, int maxSteps){
+double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData, Scalar2D& eData, Scalar1D pData, double atol, int maxSteps, bool verbose){
     double p;
 
     int rhoHigherIdx = rhoLowerIdx+1;
@@ -415,15 +426,18 @@ double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData,
     double eMid_p1 = rho1_coeff * e_11 + rho2_coeff * e_21;
     double eMid_p2 = rho1_coeff * e_12 + rho2_coeff * e_22;
 
-    while (fabs(eMid - e) > atol && step < maxSteps){
+    double p1_coeff, p2_coeff;
+
+    // convergence criterion: can use (e - eMid) or (pHigher - pLower)
+    while (fabs(pHigher - pLower) < atol && step < maxSteps){
         step += 1;
         pMid = (pLower + pHigher)/2;
         
         // cout << "step: " << step << endl;
         
         // y linear interpolate coeffs
-        double p1_coeff = (pData[idxPos] - pMid) / pGap;
-        double p2_coeff = (pMid - pData[idxNeg]) / pGap;
+        p1_coeff = (pData[idxPos] - pMid) / pGap;
+        p2_coeff = (pMid - pData[idxNeg]) / pGap;
 
         eMid = p1_coeff * eMid_p1 + p2_coeff * eMid_p2;
 
@@ -435,10 +449,22 @@ double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData,
         } else {
             pHigher = pMid;
         }
-        cout << "\n" << endl;
     }
 
     p = (pLower + pHigher)/2;
+
+    if (verbose){
+        cout << "e: " << e << endl;
+        cout << "eDiff: " << eMid - e << endl;
+        cout << "p interp lower idx: " << idxNeg << endl;
+        cout << "p1_coeff: " << p1_coeff << endl;
+        cout << "p2_coeff: " << p2_coeff << endl;
+        cout << "eMid_p1: " << eMid_p1 << endl;
+        cout << "eMid_p2: " << eMid_p2 << endl;
+    }
+
+
+
 
     return p;
 }

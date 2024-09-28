@@ -4,25 +4,19 @@
 Vec2D heating(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BC){
     Vec2D S = makeVec2D(mesh.nCellsX + 2, mesh.nCellsY + 2);
 
-    // for (int i = 0; i < mesh.nCellsX+2; i++){
-    //     for (int j = 1; j < mesh.nCellsY+1; j++){
+    for (int i = 0; i < mesh.nCellsX+2; i++){
+        for (int j = 1; j < mesh.nCellsY+1; j++){
 
-    //         CellVec cellVec(12, 0);
-    //         if (i < 2){
-    //             cellVec[4] = 5e10;
+            CellVec cellVec(12, 0);
+            if (i < 2){
+                cellVec[4] = 1*1e6;
 
-    //             // cellVec[0] = 1e-6;
-    //         }
+                // cellVec[0] = 1e-6;
+            }
 
-    //         double mfn = 1 - sysPtr->interp_mass_frac_i(u[i][j]);
-    //         cellVec[4] += (-3e6 * mfn); 
-    //         // if (i >= mesh.nCellsX){
-    //         //     // cellVec[0] = 1e-8;
-    //         // }
-
-    //         S[i][j] = cellVec;
-    //     }
-    // }
+            S[i][j] = cellVec;
+        }
+    }
 
     return S;
 }
@@ -46,6 +40,8 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
     /* state vars used in derivatives */
     double mfi_x_plus, mfi_x_minus, mfi_y_plus, mfi_y_minus;
     double T_x_plus, T_x_minus, T_y_plus, T_y_minus;
+    double p_n_x_plus, p_n_x_minus, p_n_y_plus, p_n_y_minus;
+    double p_x_plus, p_x_minus, p_y_plus, p_y_minus;
 
     /* derivatives */
     double dwx_dx, dwx_dy, dwy_dx, dwy_dy, dwz_dx, dwz_dy;
@@ -159,12 +155,21 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             d_rho_i_dy = ( mfi_y_plus * u[i][j+1][0] - mfi_y_minus * u[i][j-1][0] ) / two_dy;
 
             /* partial pressure derivatives */
-            d_pn_dx = kBScaled * ( get_n_n(u[i+1][j][0], 1-mfi_x_plus, m_n) * T_x_plus - get_n_n(u[i-1][j][0], 1-mfi_x_minus, m_n) * T_x_minus) / two_dx;
-            d_pn_dy = kBScaled * ( get_n_n(u[i][j+1][0], 1-mfi_y_plus, m_n) * T_y_plus - get_n_n(u[i][j-1][0], 1-mfi_y_minus, m_n) * T_y_minus) / two_dy;
-
-            d_pei_dx = kBScaled * ( 2 * get_n_i(u[i+1][j][0], mfi_x_plus, m_i) * T_x_plus - 2 * get_n_i(u[i-1][j][0], mfi_x_minus, m_i) * T_x_minus) / two_dx;
-            d_pei_dy = kBScaled * ( 2 * get_n_i(u[i][j+1][0], mfi_y_plus, m_i) * T_y_plus - 2 * get_n_i(u[i][j-1][0], mfi_y_minus, m_i) * T_y_minus) / two_dy;
+            p_n_x_plus = kBScaled * get_n_n(u[i+1][j][0], 1-mfi_x_plus, m_n) * T_x_plus;
+            p_n_x_minus = kBScaled * get_n_n(u[i-1][j][0], 1-mfi_x_minus, m_n) * T_x_minus;
+            p_n_y_plus = kBScaled * get_n_n(u[i][j+1][0], 1-mfi_y_plus, m_n) * T_y_plus;
+            p_n_y_minus = kBScaled * get_n_n(u[i][j-1][0], 1-mfi_y_minus, m_n) * T_y_minus;
             
+            p_x_plus = sysPtr->interp_p(u[i+1][j]);
+            p_x_minus = sysPtr->interp_p(u[i-1][j]);
+            p_y_plus = sysPtr->interp_p(u[i][j+1]);
+            p_y_minus = sysPtr->interp_p(u[i][j-1]);
+
+            d_pn_dx = (p_n_x_plus - p_n_x_minus) / two_dx;
+            d_pn_dy = (p_n_y_plus - p_n_y_minus) / two_dy;
+
+            d_pei_dx = ((p_x_plus - p_n_x_plus) - (p_x_minus - p_n_x_minus)) / two_dx;
+            d_pei_dy = ((p_y_plus - p_n_y_plus) - (p_y_minus - p_n_y_minus)) / two_dy;
 
             /* compound terms */
 
@@ -199,6 +204,7 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             p_term_z = 0;
 
 
+
             // collision coefficients 
             n_i = get_n_i(rho, mass_frac_i, m_i);
             n_n = get_n_n(rho, mass_frac_n, m_n); 
@@ -222,8 +228,7 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
 
 
             // assembling
-            double dampFac = 0.1*coll_term_prefac;
-
+            double dampFac = 0.3*coll_term_prefac;
             cellVec[9] = - v_dot_nabla_w_x - w_dot_nabla_v_x - (1 - 2*mass_frac_i) * w_dot_nabla_w_x + wx * w_dot_d_mfi + mag_term_x + p_term_x - dampFac * wx;
             cellVec[10] = - v_dot_nabla_w_y - w_dot_nabla_v_y - (1 - 2*mass_frac_i) * w_dot_nabla_w_y + wy * w_dot_d_mfi + mag_term_y + p_term_y - dampFac * wy;
             cellVec[11] = - v_dot_nabla_w_z - w_dot_nabla_v_z - (1 - 2*mass_frac_i) * w_dot_nabla_w_z + wz * w_dot_d_mfi + mag_term_z + p_term_z - dampFac * wz;

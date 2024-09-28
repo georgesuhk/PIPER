@@ -19,7 +19,7 @@ class EoS {
         string getEoSType();
 
         /* returns specific internal energy */
-        virtual double get_e(double& rho, double& p) = 0;
+        virtual double get_e(double& rho, double& p, bool verbose = false) = 0;
 
         /* returns ratio of specific heats */
         virtual double interp_gamma(double& rho, double& p) = 0;
@@ -35,12 +35,15 @@ class EoS {
         virtual double get_T(int& i, int& j) = 0;
 
         /* returns pressure */
-        virtual double interp_p(double& rho, double& e) = 0;
+        virtual double interp_p(double& rho, double& e, bool verbose = false) = 0;
 
         virtual double get_p(int& i, int& j) = 0;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) = 0;
+
+        /* returns specific internal energy of neutrals */
+        virtual double interp_e_n(double& rho, double& p) = 0;
 
         /* returns mass fraction of electrons */
         virtual double interp_mass_frac_e(double& rho, double& p) = 0;
@@ -89,7 +92,7 @@ class IdealEoS : public EoS {
         // GET FUNCTIONS ======
 
         /* returns specific internal energy */
-        virtual double get_e(double& rho, double& p) override;
+        virtual double get_e(double& rho, double& p, bool verbose = false) override;
 
         /* returns adiabatic index / ratio of specific heats through interpolation */
         double interp_gamma(double& rho, double& p) override;
@@ -106,12 +109,16 @@ class IdealEoS : public EoS {
         virtual double get_T(int& i, int& j) override;
 
         /* returns pressure */
-        virtual double interp_p(double& p, double& e) override;
+        virtual double interp_p(double& p, double& e, bool verbose = false) override;
 
         virtual double get_p(int& i, int& j) override;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
+
+        /* returns specific internal energy of neutrals */
+
+        virtual double interp_e_n(double& rho, double& p) override;
 
         /* returns mfe */
         virtual double interp_mass_frac_e(double& rho, double& p) override;
@@ -133,6 +140,7 @@ class IdealEoS : public EoS {
         void set_constThermCon(double input);
         void set_mass_frac_n(double input_mass_frac);
         void set_mass_frac_i(double input_mass_frac);
+        void set_mass_frac_e(double input_mass_frac);
     
     protected:
         // adibatic index
@@ -170,7 +178,7 @@ class TabEoS : public EoS{
         Scalar2D& get_T_Table();
 
         /* returns specific internal energy */
-        virtual double get_e(double& rho, double& p) override;
+        virtual double get_e(double& rho, double& p, bool verbose = true) override;
 
         /* returns adiabatic index / ratio of specific heats */
         double interp_gamma(double& rho, double& p) override;
@@ -179,6 +187,9 @@ class TabEoS : public EoS{
 
         /* returns thermal conductivity */
         double interp_therm_con(double& rho, double& p) override;
+
+        /* returns specific internal energy of the neutrals */
+        double interp_e_n(double& rho, double& p) override;
 
         /* returns temperature */
         virtual double interp_T(double& rho, double& p) override;
@@ -189,7 +200,7 @@ class TabEoS : public EoS{
         virtual double get_p(int& i, int& j) override;
 
         /* interps p */
-        virtual double interp_p(double& rho, double& e) override;
+        virtual double interp_p(double& rho, double& e, bool verbose = false) override;
 
         /* returns sound speed */
         virtual double get_Cs(double& rho, double& p) override;
@@ -225,6 +236,7 @@ class TabEoS : public EoS{
 
         /* coefficients */
         Scalar2D e_Table;
+        Scalar2D e_n_Table;
         Scalar2D gamma_Table;
         Scalar2D T_Table;
         Scalar2D Cs_Table;

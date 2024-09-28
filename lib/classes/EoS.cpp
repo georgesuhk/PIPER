@@ -108,12 +108,12 @@ double IdealEoS::interp_therm_con(double& rho, double& p){
     return constThermCon;
 }
 
-double IdealEoS::get_e(double& rho, double& p){
+double IdealEoS::get_e(double& rho, double& p, bool verbose){
     return (p / (gamma - 1)) / rho;
 };
 
 double IdealEoS::interp_T(double& rho, double& p){
-    double n = rho / m;
+    double n = rho / (mass_frac_i * m + mass_frac_n * m + mass_frac_e * m);
     return p / (n * kBScaled);
 };
 
@@ -125,13 +125,17 @@ double IdealEoS::get_p(int& i, int& j){
     return p_cache[i][j];
 };
 
-double IdealEoS::interp_p(double& rho, double& e){
+double IdealEoS::interp_p(double& rho, double& e, bool verbose){
     return (gamma - 1) * rho * e;
 }
 
 double IdealEoS::get_Cs(double& rho, double& p){
     return sqrt(gamma * p / rho);
 };
+
+double IdealEoS::interp_e_n(double& rho, double& p){
+    return (p / (gamma - 1)) / rho;
+}
 
 double IdealEoS::interp_mass_frac_e(double& rho, double& p){
     return mass_frac_e;
@@ -173,6 +177,10 @@ void IdealEoS::set_mass_frac_i(double input_mass_frac){
     mass_frac_i = input_mass_frac;
 };
 
+void IdealEoS::set_mass_frac_e(double input_mass_frac){
+    mass_frac_e = input_mass_frac;
+};
+
 
 // TAB EOS ======
 
@@ -200,19 +208,16 @@ double TabEoS::get_p(int& i, int& j){
     return p_cache[i][j];
 }
 
-double TabEoS::interp_p(double& rho, double& e){
+double TabEoS::interp_p(double& rho, double& e, bool verbose){
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
-    double p =  BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-4, 100); 
+    double p =  BisectSolver(rho, rho_lower_idx, e, densities, e_Table, pressures, 1e-3, 100, verbose); 
     return p;
 };
 
 
-double TabEoS::get_e(double& rho, double& p){
+double TabEoS::get_e(double& rho, double& p, bool verbose){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
-
-    cout << "p_lower_idx: " << p_lower_idx << endl;
-    cout << "rho_lower_idx: " << rho_lower_idx << endl;
 
     double p_lower = pressures[p_lower_idx];
     double p_higher = pressures[p_lower_idx + 1];
@@ -220,7 +225,7 @@ double TabEoS::get_e(double& rho, double& p){
     double rho_lower = densities[rho_lower_idx];
     double rho_higher = densities[rho_lower_idx + 1];
 
-    return bilinearInterp(e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+    return bilinearInterp(e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx, verbose);
 }
 
 double TabEoS::get_gamma(int& i, int& j){
@@ -285,6 +290,19 @@ double TabEoS::get_Cs(double& rho, double& p){
     return bilinearInterp(Cs_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
 
+double TabEoS::interp_e_n(double& rho, double& p){
+    int p_lower_idx = getLowerBound(p, activePIndices, pressures);
+    int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
+
+    double p_lower = pressures[p_lower_idx];
+    double p_higher = pressures[p_lower_idx + 1];
+
+    double rho_lower = densities[rho_lower_idx];
+    double rho_higher = densities[rho_lower_idx + 1];
+
+    return bilinearInterp(e_n_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
+}
+
 double TabEoS::interp_mass_frac_e(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
     int rho_lower_idx = getLowerBound(rho, activeRhoIndices, densities);
@@ -297,7 +315,6 @@ double TabEoS::interp_mass_frac_e(double& rho, double& p){
 
     return bilinearInterp(mass_frac_e_Table, rho, p, rho_lower, rho_higher, rho_lower_idx, p_lower, p_higher, p_lower_idx);
 }
-
 
 double TabEoS::interp_mass_frac_i(double& rho, double& p){
     int p_lower_idx = getLowerBound(p, activePIndices, pressures);
@@ -360,7 +377,10 @@ void TabEoS::genFromData(Mesh2D mesh, vector<string> varList, string dataFolder,
         }
         else if (var == "e"){
             e_Table = tabularData;
-        }        
+        }     
+        else if (var == "e_n"){
+            e_n_Table = tabularData;
+        }   
         else if (var == "gamma"){
             gamma_Table = tabularData;
         }

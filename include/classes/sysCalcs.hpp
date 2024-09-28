@@ -4,7 +4,8 @@
 #include "settings.hpp"
 #include "EoS.hpp"
 #include "calcs.hpp"
-
+#include "sysEigens.hpp"
+#include <Eigen/Dense>
 
 //base class for system calculations
 class SysCalcs {
@@ -71,6 +72,12 @@ class SysCalcs {
         /* calculates KE based on given velocities */
         double get_KE(double& rho, double& vx, double& vy, double& vz);
 
+        /* calculate KE based on velocity squared */
+        double get_KE(double& rho, double v_squared);
+
+        /* returns velocity squared */
+        double get_v_squared(CellVec& u);
+
         /* returns the resistivity */
         double get_Resis(CellVec& u, int i, int j, bool interp = true);
 
@@ -84,7 +91,6 @@ class SysCalcs {
         /* returns ion mass */
         double get_m_i();
 
-
         // Species densities ------
 
         /* electrons */
@@ -97,8 +103,9 @@ class SysCalcs {
 
         double get_mass_frac_i(int i, int j);
 
-        // Mass fractions ------
+        double interp_e_n(CellVec& u);
 
+        double interp_e_n(double& rho, double& p);
 
         /* converts CellVec from conservative form to primitive form */
         virtual CellVec conservToPrim(CellVec& u) = 0;
@@ -148,6 +155,7 @@ class SysCalcs {
         string sysName = "base";
         double m_i = protonMass;
         double m_n = protonMass; 
+        Eigen::Matrix<double, 7, 7> eigen_matrix;
 };
 
 

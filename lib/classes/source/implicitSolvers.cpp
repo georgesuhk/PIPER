@@ -203,6 +203,9 @@ void CN_Conduction_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, share
         for (int i = 1; i < mesh.nCellsX+1; i++){
 
             // obtaining cell specific coefficients
+            // if (i == round(mesh.nCellsX/2) && j == 1 ){
+            //     cout << diffCoeff << endl;
+            // }
             diffCoeff = getCoeffFunc(u[i][j], i, j, sysPtr, interp);
             diffCoeff_next = getCoeffFunc(u[i][j+1], i, j+1, sysPtr, interp);
             diffCoeff_prev = getCoeffFunc(u[i][j-1], i, j-1, sysPtr, interp);
@@ -251,22 +254,14 @@ void CN_Conduction_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, share
 
         // Applying solution to u
         for (int i = 1; i < mesh.nCellsX+1; i++){
-            double mfi = sysPtr->interp_mass_frac_i(u[i][j]);
-            double mfe = sysPtr->interp_mass_frac_e(u[i][j]);
-            double mfn = 1 - mfi - mfe;
+
             double rho = u[i][j][0];
-            double mass = 1.67e-27;
-            double n = 2 * (mfi * rho) / mass + (mfn * rho) / mass;
-            // double n = 2 * get_n_i(u[i][j][0], mfi, protonMass) + get_n_n(u[i][j][0], 1-mfi, protonMass);
-            double p_new = n * kBScaled * sysPtr->interp_T(u[i][j]);
-            double p = sysPtr->interp_p(u[i][j]);
+            double pOld = sysPtr->interp_p(u[i][j]);
+            double p = pOld / sysPtr->getEoSPtr()->interp_T(rho, pOld) * solution[i-1];
+            double e_new = sysPtr->getEoSPtr()->get_e(rho, p);
 
-            // cout << "p: " << sysPtr->interp_p(u[i][j]) << endl;
-            // cout << "p new: " << p_new << endl;
+            u[i][j][varIdx] = sysPtr->get_KE(u[i][j]) + sysPtr->get_MagE(u[i][j]) + rho * e_new;
 
-
-            uMid[i][j][varIdx] = sysPtr->get_KE(u[i][j]) + sysPtr->get_MagE(u[i][j]) + rho * sysPtr->getEoSPtr()->get_e(rho, p);
-            // cout << uMid[i][j][varIdx] - u[i][j][varIdx] << endl;
         }
     }
 
@@ -330,33 +325,13 @@ void CN_Conduction_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, share
 
         // Applying solution to u
         for (int j = 1; j < mesh.nCellsY+1; j++){
-            double mfi = sysPtr->interp_mass_frac_i(uMid[i][j]);
-            double mfe = sysPtr->interp_mass_frac_e(uMid[i][j]);
-            double mfn = 1 - mfi - mfe;
-            double rho = u[i][j][0];
-            double mass = 1.67e-27;
-            double n = 2 * (mfi * rho) / mass + (mfn * rho) / mass;
-            // double n = 2 * get_n_i(u[i][j][0], mfi, protonMass) + get_n_n(u[i][j][0], 1-mfi, protonMass);
-            double p_new = n * kBScaled * sysPtr->interp_T(u[i][j]);
-            double e = sysPtr->get_e(u[i][j]);
 
-            double p = sysPtr->getEoSPtr()->interp_p(rho, e);
-            double e_interp = sysPtr->getEoSPtr()->get_e(rho, p_new);
+            // double rho = uMid[i][j][0];
+            // double pOld = sysPtr->interp_p(uMid[i][j]);
+            // double p = pOld / sysPtr->getEoSPtr()->interp_T(rho, pOld) * solution[j-1];
+            // double e_new = sysPtr->getEoSPtr()->get_e(rho, p);
 
-            // cout << "p: " << sysPtr->interp_p(u[i][j]) << endl;
-            // cout << "p new: " << p_new << endl;
-
-            // cout << "e: " << sysPtr->get_e(u[i][j]) << endl;
-            // cout << "e calc: " << sysPtr->getEoSPtr()->get_e(rho, p) << endl;
-            if (fabs(e - e_interp) > 1){
-                cout << "i: " << i << endl;
-                cout << "e:" << e << endl;
-                cout << "e_interp: " << e_interp << endl;
-                cout << "diff: " << e - e_interp << endl;
-            }
-
-
-            // u[i][j][varIdx] = sysPtr->get_KE(u[i][j]) + sysPtr->get_MagE(u[i][j]) + rho * sysPtr->getEoSPtr()->get_e(rho, p);
+            // u[i][j][varIdx] = sysPtr->get_KE(uMid[i][j]) + sysPtr->get_MagE(uMid[i][j]) + rho * e_new;
 
         }
     }

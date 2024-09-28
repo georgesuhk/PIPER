@@ -65,13 +65,13 @@ CellVec bilinearInterp(const Vec2D& u, Mesh2D& mesh, double xPos, double yPos);
 
 /* bilinear interpolation function for scalar fields (used in tabulated EoS) */
 double bilinearInterp(vector<vector<double>>& data, double& xVar, double& yVar, double& x1, double& x2, double xLowerIdx,
-double& y1, double& y2, double yLowerIdx);
+double& y1, double& y2, double yLowerIdx, bool verbose = false);
 
 /* Uses Bisection search to return lower index that bounds a value in an array, used in TabEoS */
 int getLowerBound(const double& val, array<int,2> activeRange, vector<double>& data);
 
 /* Bisection root finder used in TabEoS to find p from rho and e */
-double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData, Scalar2D& eData, Scalar1D pData, double atol, int maxSteps);
+double BisectSolver(double& rho, int& rhoLowerIdx, double& e, Scalar1D& rhoData, Scalar2D& eData, Scalar1D pData, double atol, int maxSteps, bool verbose = false);
 
 
 #endif

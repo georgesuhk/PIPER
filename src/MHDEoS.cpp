@@ -4,7 +4,7 @@
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S1/";
+string dataFolder = "./EoSData/HFusion4_S3/";
 string resultsFolder = "./output/MHDEoS/";
 
 // choosing system ------
@@ -17,7 +17,7 @@ double mass = protonMass;
 
 // setting grid ------
 
-int nCellsX = 350, nCellsY = 2;
+int nCellsX = 200, nCellsY = 2;
 double xMin = 0, xMax = 1.0;
 double yMin = 0, yMax = 0.1;
 
@@ -27,7 +27,7 @@ Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
 // initial conditions ------
 
-double rho_SF = 1e-9;
+double rho_SF = 1.3e-7;
 double p_SF = 1e-4;
 vector<double> interfacePositions = {0.5};
 vector<CellVec> initCellVecs = BrioWuPIP;
@@ -35,19 +35,20 @@ vector<CellVec> initCellVecs = BrioWuPIP;
 // source terms ------
 ExplicitSolver explicitSolver = RK4;
 bool doSourceUpdate = true;
-int sourceTimeRatio = 1;
-int impExRatio = 1;
-vector<implicitSource> implicitSources = {conduction};
-// vector<implicitSource> implicitSources = {};
-vector<SourceFuncEx> exSourceFuncs = {};
-// vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+int sourceTimeRatio = 100;
+int impExRatio = 10;
+// vector<implicitSource> implicitSources = {conduction};
+vector<implicitSource> implicitSources = {};
+// vector<SourceFuncEx> exSourceFuncs = {};
+vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
 
 // EoS ------
 double gammaFac = 5.0/3.0;
 double constResis = 3;
 double constThermCon = 0;
-double mass_frac_n = 0.8;
-double mass_frac_i = 1.0 - mass_frac_n;
+double mass_frac_i = 0.05;
+double mass_frac_e = mass_frac_i / (protonMass/electronMass);
+double mass_frac_n = 1.0 - mass_frac_i - mass_frac_e;
 
 // divergence cleaning ------
 bool doDC = true;
@@ -70,7 +71,7 @@ bool doInSimExport = true;
 int forced_step_lim = 0;
 
 /* the ratio to lower time step by */
-double forced_ratio = 1e-5;
+double forced_ratio = 1e-3;
 
 int main(void){
     // SET UP ======
@@ -84,14 +85,11 @@ int main(void){
     // shared_ptr<EoS> EoSPtr = make_shared<IdealEoS>(EoSIdeal);
 
     TabEoS EoSTab;
-    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","gamma","resis","thermCon","mass_frac_e","mass_frac_n","mass_frac_i"}, dataFolder, ',');
+    EoSTab.genFromData(mesh, {"pressure","densities","T","Cs","e","e_n","gamma","resis","thermCon","mass_frac_e","mass_frac_n","mass_frac_i"}, dataFolder, ',');
     shared_ptr<EoS> EoSPtr = make_shared<TabEoS>(EoSTab);
 
     PIP0_Calcs sysCalcs(EoSPtr);
     shared_ptr<SysCalcs> sysPtr = make_shared<PIP0_Calcs>(sysCalcs);
-
-    // FIPCalcs sysCalcs(EoSPtr);
-    // shared_ptr<SysCalcs> sysPtr = make_shared<FIPCalcs>(sysCalcs);
 
     Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
     Recorder recorder;
@@ -112,43 +110,31 @@ int main(void){
     sim.setExportGap(simExportDelay);
     sim.inform();
 
-    // testing
+    // SIMULATION ======
 
-    // double rho = 1.67e-8;
-    // double e = 26900;
+    cout << "Starting simulation. Tmax = " << tMax << "\n\n" << endl;
+    double t = tMin, step = 1;
 
-    // double p = sysPtr->getEoSPtr()->interp_p(rho, e);
-    // double e_interp = sysPtr->getEoSPtr()->get_e(rho, p);
-
-    // cout << "p: " << p << endl;
-    // cout << "e_interp: " << e_interp << endl;
-
-
-    // // SIMULATION ======
-
-    // cout << "Starting simulation. Tmax = " << tMax << "\n\n" << endl;
-    // double t = tMin, step = 1;
-
-    // while (t <= tMax && step <= maxSteps){
+    while (t <= tMax && step <= maxSteps){
         
-    //     // forcing smaller time steps in the beginning
-    //     if (step < forced_step_lim){
-    //         double forced_dt = forced_ratio * sim.get_min_dt();
-    //         sim.force_set_dt(forced_dt);
-    //     } else {
-    //         sim.update_dt();
-    //     }
-    //     sim.evolve();
+        // forcing smaller time steps in the beginning
+        if (step < forced_step_lim){
+            double forced_dt = forced_ratio * sim.get_min_dt();
+            sim.force_set_dt(forced_dt);
+        } else {
+            sim.update_dt();
+        }
+        sim.evolve();
 
-    //     t = sim.getTime();
-    //     step = sim.getStep();
-    //     cout << "t: " << t << endl;
-    //     // cout << "dt: " << sim.get_dt() << endl;
-    // }
+        t = sim.getTime();
+        step = sim.getStep();
+        cout << "t: " << t << endl;
+        // cout << "dt: " << sim.get_dt() << endl;
+    }
 
-    // cout << "Simulation Completed." << endl;
-    // sim.forceRecordAll();
-    // sim.exportAll(resultsFolder);
+    cout << "Simulation Completed." << endl;
+    sim.forceRecordAll();
+    sim.exportAll(resultsFolder);
 
     return 0; 
 }

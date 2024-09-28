@@ -69,6 +69,20 @@ double SysCalcs::get_KE(double& rho, double& vx, double& vy, double& vz){
     return 0.5 * rho * ( pow(vx, 2.0) + pow(vy, 2.0) + pow(vz, 2.0) );   
 };
 
+double SysCalcs::get_KE(double& rho, double v_squared){
+    return 0.5 * rho * v_squared;
+}
+
+double SysCalcs::get_v_squared(CellVec& u){
+
+    double rho = u[0];
+    double vx = u[1] / rho;
+    double vy = u[2] / rho;
+    double vz = u[3] / rho;
+
+    return pow(vx, 2.0) + pow(vy, 2.0) + pow(vz, 2.0);
+};
+
 double SysCalcs::get_E(CellVec& u){
     return u[4] - get_MagE(u);  
 }
@@ -87,8 +101,10 @@ double SysCalcs::interp_gamma(CellVec& u){
 double SysCalcs::interp_therm_con(CellVec& u){
     double rho = u[0];
     double p = interp_p(u);
-    // return EoSPtr->interp_therm_con(rho, p);
-    return 0;
+    double thermCon = EoSPtr->interp_therm_con(rho, p) * 1e-11;
+    // cout << thermCon << endl;
+    // double thermCon = 1e14;
+    return thermCon;
 }
 
 double SysCalcs::interp_p(CellVec& u){
@@ -106,6 +122,16 @@ double SysCalcs::get_m_i(){
 
 double SysCalcs::get_m_n(){
     return m_n;
+}
+
+double SysCalcs::interp_e_n(CellVec& u){
+    double rho = u[0];
+    double p = interp_p(u);
+    return EoSPtr->interp_e_n(rho, p);
+}
+
+double SysCalcs::interp_e_n(double& rho, double& p){
+    return EoSPtr->interp_e_n(rho, p);
 }
 
 double SysCalcs::interp_mass_frac_e(CellVec& u){
@@ -369,19 +395,17 @@ double PIP0_Calcs::get_total_neutral_E(CellVec& u){
     double mass_frac_i = interp_mass_frac_i(u);
     double mass_frac_n = 1 - mass_frac_i;
     double n_n = get_n_n(rho, mass_frac_n, m_n);
-    double gamma = interp_gamma(u);
     double rho_n = rho * mass_frac_n;
+    double e_n = interp_e_n(u);
     
     // getting v_n (neutral speed)
-    double vn_x = u[1]/rho + mass_frac_i * wx;
-    double vn_y = u[2]/rho + mass_frac_i * wy;
-    double vn_z = u[3]/rho + mass_frac_i * wz;
+    double vn_x = u[1]/rho - mass_frac_i * wx;
+    double vn_y = u[2]/rho - mass_frac_i * wy;
+    double vn_z = u[3]/rho - mass_frac_i * wz;
 
     double KE_n = get_KE(rho_n, vn_x, vn_y, vn_z);
-    double p_n = n_n * kBScaled * interp_T(u);
-    double e_n_plus_p_n = (gamma)/(gamma-1) * p_n;
 
-    return KE_n + e_n_plus_p_n;
+    return KE_n + rho_n * e_n;
 }
 
 CellVec PIP0_Calcs::conservToPrim(CellVec& u){
@@ -508,26 +532,63 @@ double PIP0_Calcs::get_vix(CellVec& u){
 
 // fastest wave speed taking into account of w
 double PIP0_Calcs::getFastestWaveSpeed(CellVec& u){
+    double rho = u[0];
+    double vx = u[1] / rho;
+    double vy = u[2] / rho;
+    double vz = u[3] / rho;
 
-    double vx = u[1] / u[0];
-    double vy = u[2] / u[0];
-    double vz = u[3] / u[0];
+    // double a_array[] = {vx, vy, vz}; 
+    // double a = *max_element(begin(a_array), end(a_array));
+
+    double p = interp_p(u);
+    double Bx = u[5];
+    double By = u[6];
+    double Bz = u[7];
     double wx = u[9];
     double wy = u[10];
     double wz = u[11];
+    double mfi = interp_mass_frac_i(u);
+    double gamma = interp_gamma(u);
+    double c2 = mfi * (mfi-1);
+    double delta = c2 * wx / rho;
 
-    double a_x = fabs(vx) + get_Cf(u, 'x');
-    double a_y = fabs(vy) + get_Cf(u, 'y');
-    double a_z = fabs(vz) + get_Cf(u, 'z');
-    double aw_x = (fabs(wx) + fabs(a_x)) * 2;
-    double aw_y = (fabs(wy) + fabs(a_y)) * 2;
-    double aw_z = (fabs(wz) + fabs(a_z)) * 2;
+    eigen_matrix << vx, rho, 0, 0, 0, 0, 0,
+            -delta*wx, vx, 0, 0, 1/rho, By/rho, Bz/rho,
+            -delta*wy, 0, vx, 0, 0, -Bx/rho, 0,
+            -delta*wz, 0, 0, vx, 0, 0, -Bx/rho,
+            0, gamma*p, 0, 0, vx, 0, 0,
+            0, By, -Bx, 0, 0, vx, 0,
+            0, Bz, 0, -Bx, 0, 0, vx;
 
-    double a_array[] = {aw_x, aw_y, aw_z}; 
-    double a = *max_element(begin(a_array), end(a_array));
+    Eigen::EigenSolver<Eigen::MatrixXd> solver(eigen_matrix);
+    Eigen::VectorXcd eigenvalues = solver.eigenvalues();
+    double max_eval = eigenvalues.cwiseAbs().maxCoeff();
+    return max_eval;
 
-    return a;
 };
+
+// // fastest wave speed taking into account of w
+// double PIP0_Calcs::getFastestWaveSpeed(CellVec& u){
+
+//     double vx = u[1] / u[0];
+//     double vy = u[2] / u[0];
+//     double vz = u[3] / u[0];
+//     double wx = u[9];
+//     double wy = u[10];
+//     double wz = u[11];
+
+//     double a_x = fabs(vx) + get_Cf(u, 'x');
+//     double a_y = fabs(vy) + get_Cf(u, 'y');
+//     double a_z = fabs(vz) + get_Cf(u, 'z');
+//     double aw_x = fabs(wx) * a_x;
+//     double aw_y = fabs(wy) * a_y;
+//     double aw_z = fabs(wz) * a_z;
+
+//     double a_array[] = {a_x, a_y, a_z, aw_x, aw_y, aw_z}; 
+//     double a = *max_element(begin(a_array), end(a_array));
+
+//     return a;
+// };
 
 
 

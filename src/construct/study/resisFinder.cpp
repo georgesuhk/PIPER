@@ -20,7 +20,7 @@ string mixName = "HFusion";
 
 double p = 101325 / 1e4;
 // double p = 10;
-double rho = 8e-8;
+double rho = 1.67e-7;
 double resisScale = 1.0/(sqrt(pAtmos)*vacPermeab);
 
 int main(void){
@@ -57,11 +57,32 @@ int main(void){
     double resis_mpp = 1/mix.electricConductivity();
     double resis_Brag = (alpha_en + alpha_ei) / (pow(n_e, 2.0) * pow(elementaryCharge, 2.0));
     double e = mix.mixtureEnergyMass();
+    vector<double> eArray(3);
+    mix.getEnergiesMass(eArray.data());
 
 
     cout << "T: " << temp << endl;
     cout << "P: " << p << endl;
+    cout << "e: " << e << endl;
+    cout << "cv * T: " << mix.mixtureFrozenCvMole() * temp << endl;
+    cout << "cp * T: " << mix.mixtureFrozenCpMole() * temp << endl;
+    // cout << "cv_eq * T: " << mix.mixtureEquilibriumCvMass() * temp << endl;
+    cout << "cp_eq * T: " << mix.mixtureEquilibriumCpMole() * temp << endl;
+
+
+
     cout << "rho * e: " << rho * e << endl;
+    cout << "eArray sum: " << (mass_frac_e * eArray[0] + mass_frac_n * eArray[1] + mass_frac_i * eArray[2]) * rho << endl;
+
+    cout << "rho_n e_n: " << mass_frac_n * rho * eArray[1] << endl;
+    cout << "mfn * rho * e: " << mass_frac_n * rho * e << endl;
+
+    // cout << "e: " << e << endl;
+    double effective_mass_fac = (mass_frac_e * electronMass + mass_frac_i * protonMass + mass_frac_n * protonMass) / protonMass;
+    cout << "(gamma)/(gamma-1) p: " << (gamma / (gamma - 1)) * p * mix.mixtureMwMole(mix.X()) << endl;
+
+    cout << "e_n = " << mix.X()[1] * e << endl;
+    cout << "eArray n: " << mass_frac_n * rho * eArray[1] << endl;
 
     cout << "n kB T: " << number_density * kB * temp << endl;
     cout << "approx p: " << (n_n + 2 * n_i) * kB * temp << endl;
@@ -78,9 +99,14 @@ int main(void){
     cout << "resis_mpp: " << resis_mpp << "; scaled: " << resis_mpp * resisScale << endl;
     cout << "resis_Brag: " << resis_Brag << "; scaled: " << resis_Brag * resisScale << endl;
 
+    vector<double> enthalpies(3);
+    mix.getEnthalpiesMass(enthalpies.data());
+
+    cout << "h_n: " << enthalpies[2] - n_i * kB * temp / (mass_frac_i * rho) << endl;
+    cout << "e_n: " << eArray[2] << endl;
+
     /* testing set state */
-    vector<double> eArray(3);
-    mix.getEnergiesMass(eArray.data());
+
 
     vector<double> eTotalArray = {density * e};
 
