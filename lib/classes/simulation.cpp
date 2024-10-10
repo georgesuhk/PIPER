@@ -145,16 +145,19 @@ void Simulation::evolve(){
     evolverPtr->evolveMat(u, sysPtr, mesh, dt, 'y');
     sysPtr->getEoSPtr()->cacheAll(u, mesh);
 
-    /* explicitly setting w for no inertia approx */
-    // sysPtr->set_w_no_inert(u, mesh);
 
     /* source term evolution - S^(t/2) */
     if (doSourceUpdate){
         sourceUpdates(dt/2);
     }
 
+    /* explicitly setting w for no inertia approx */
+    // sysPtr->set_w_no_inert(u, mesh);
+
     // RECORDING MATERIALS ======
     recorderPtr->update(dt, t, step, u);
+
+    // enforce_symmetry(u, mesh, 3e-2, 1e-1, true, false);
 
 
     // IN SIM EXPORT ======

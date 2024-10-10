@@ -1,11 +1,12 @@
 #include "init.hpp"
+#include "init2DTests.hpp"
 #include "testCases.hpp"
 #include "simulation.hpp"
 
 // data folders ------
 
-string dataFolder = "./EoSData/HFusion4_S3/";
-string resultsFolder = "./output/MHDEoS/";
+string dataFolder = "./EoSData/HFusion4_S4/";
+string resultsFolder = "./output/MHDResis/";
 
 // choosing system ------
 
@@ -17,36 +18,34 @@ double mass = protonMass;
 
 // setting grid ------
 
-int nCellsX = 200, nCellsY = 2;
-double xMin = 0, xMax = 1.0;
-double yMin = 0, yMax = 0.02;
+int nCellsX = 100, nCellsY = 200;
+double xMin = -0.25, xMax = 0.25;
+double yMin = -0.5, yMax = 0.5;
 
-double tMin = 0, tMax = 0.08*sqrt(rho_SF)/sqrt(p_SF);
-
+double tMin = 0, tMax = 2.0*sqrt(rho_SF)/sqrt(p_SF);
 int maxSteps = 1e6;
 Mesh2D mesh(xMin, xMax, nCellsX, yMin, yMax, nCellsY);
 
 // initial conditions ------
 
-double rho_SF = 1.0e-7;
+double rho_SF = 0.1e-7;
 double p_SF = 1e-4;
-vector<double> interfacePositions = {0.5};
-vector<CellVec> initCellVecs = shock_impact_test;
+vector<double> interfacePositions = {0.0};
+vector<CellVec> initCellVecs = test_ones;
 
 // source terms ------
 ExplicitSolver explicitSolver = RK2;
 bool doSourceUpdate = true;
 int sourceTimeRatio = 1;
-int impExRatio = 20;
-// vector<implicitSource> implicitSources = {ohmic_diffusion};
-vector<implicitSource> implicitSources = {};
-// vector<SourceFuncEx> exSourceFuncs = {};
-// vector<SourceFuncEx> exSourceFuncs = {joule_heating_old};
-vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+int impExRatio = 1;
+vector<implicitSource> implicitSources = {ohmic_diffusion};
+// vector<implicitSource> implicitSources = {};
+// vector<SourceFuncEx> exSourceFuncs = {w_evolution_func};
+vector<SourceFuncEx> exSourceFuncs = {joule_heating_old};
 
 // EoS ------
 double gammaFac = 5.0/3.0;
-double constResis = 1;
+double constResis = 0;
 double constThermCon = 0;
 double mass_frac_i = 1.0;
 double mass_frac_e = mass_frac_i / (protonMass/electronMass);
@@ -64,7 +63,7 @@ shared_ptr<Evolver> evolverPtr = make_shared<SLICEvolver>(evolver);
 // recorder and exporter ------
 double recordingDelayTime = (tMax-tMin)/20;
 Exporter exporter = ExportPIP;
-double simExportDelay = (tMax - tMin)/0.1;
+double simExportDelay = (tMax - tMin)/4;
 bool doInSimExport = true;
 
 // forcing initial time steps ------
@@ -93,7 +92,10 @@ int main(void){
     PIP0_Calcs sysCalcs(EoSPtr);
     shared_ptr<SysCalcs> sysPtr = make_shared<PIP0_Calcs>(sysCalcs);
 
-    Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
+    vector<double> initParams = {1.0};
+    Vec2D uInit = init_reconnection(initParams, mesh, sysPtr, BC);
+    // Vec2D uInit = initPlanar(initCellVecs, interfacePositions, mesh, sysPtr, BC, 'x');
+
     Recorder recorder;
     recorder.setDelayTime(recordingDelayTime);
     shared_ptr<Recorder> recorderPtr = make_shared<Recorder>(recorder);
@@ -111,6 +113,9 @@ int main(void){
     sim.setDoInSimExport(doInSimExport);
     sim.setExportGap(simExportDelay);
     sim.inform();
+
+    // double dt = 1.0;
+    // CN_Diffusion_Solver_full(uInit, 6, get_Resis, sysPtr, mesh, dt, "Neumann", BC);
 
     // SIMULATION ======
 

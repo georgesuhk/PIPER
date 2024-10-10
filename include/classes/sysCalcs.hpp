@@ -5,7 +5,7 @@
 #include "EoS.hpp"
 #include "calcs.hpp"
 #include "sysEigens.hpp"
-#include <Eigen/Dense>
+// #include <Eigen/Dense>
 
 //base class for system calculations
 class SysCalcs {
@@ -82,6 +82,8 @@ class SysCalcs {
         double get_Resis(CellVec& u, int i, int j, bool interp = true);
 
         double interp_Resis(double& rho, double& p);
+
+        double interp_Resis(CellVec& u);
 
         // Get masses
 

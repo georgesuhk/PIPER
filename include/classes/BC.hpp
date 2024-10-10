@@ -20,6 +20,13 @@ void PeriodicBCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr);
 /* left reflective right transmissive*/
 void LR_RT_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr);
 
+/* top transmissive bottom reflective */
+void TT_BR_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr);
+
+
+/* X transmissive Y periodic BCs */
+void XT_YP_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr);
+
 /* Bohm BCs, used for detachment test */
 void BohmBCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr);
 

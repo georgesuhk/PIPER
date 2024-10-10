@@ -22,6 +22,84 @@ Vec2D heating(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BC){
 }
 
 
+Vec2D joule_heating(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BC){
+    Vec2D S = makeVec2D(mesh.nCellsX + 2, mesh.nCellsY + 2);
+
+    //updating total energy
+    double resis_i_plus_1, resis_i_minus_1, resis_j_plus_1, resis_j_minus_1;
+
+    for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int j = 1; j < mesh.nCellsY+1; j++){
+
+            // finding current
+            resis_i_plus_1 = sysPtr->interp_Resis(u[i+1][j]);
+            resis_i_minus_1 = sysPtr->interp_Resis(u[i-1][j]);
+            resis_j_plus_1 = sysPtr->interp_Resis(u[i][j+1]);
+            resis_j_minus_1 = sysPtr->interp_Resis(u[i][j-1]);
+
+
+            Eigen::Vector3d J_i_plus_1 = resis_i_plus_1 * get_J(u, mesh, i+1, j);
+            Eigen::Vector3d J_i_minus_1 = resis_i_minus_1 * get_J(u, mesh, i-1, j);
+            Eigen::Vector3d J_j_plus_1 = resis_i_minus_1 * get_J(u, mesh, i, j+1);
+            Eigen::Vector3d J_j_minus_1 = resis_j_minus_1 * get_J(u, mesh, i, j-1);
+
+            Eigen::Vector3d B_i_plus_1(u[i+1][j][5], u[i+1][j][6], u[i+1][j][7]);
+            Eigen::Vector3d B_i_minus_1(u[i-1][j][5], u[i-1][j][6], u[i-1][j][7]);
+            Eigen::Vector3d B_j_plus_1(u[i][j+1][5], u[i][j+1][6], u[i][j+1][7]);
+            Eigen::Vector3d B_j_minus_1(u[i][j-1][5], u[i][j-1][6], u[i][j-1][7]);
+
+
+            Eigen::Vector3d B_cross_eta_J_i_plus_1 = B_i_plus_1.cross(J_i_plus_1);
+            Eigen::Vector3d B_cross_eta_J_i_minus_1 = B_i_minus_1.cross(J_i_minus_1);
+            Eigen::Vector3d B_cross_eta_J_j_plus_1 = B_j_plus_1.cross(J_j_plus_1);
+            Eigen::Vector3d B_cross_eta_J_j_minus_1 = B_j_minus_1.cross(J_j_minus_1);
+
+            //assembling
+            S[i][j][4] = (B_cross_eta_J_i_plus_1[0] - B_cross_eta_J_i_minus_1[0]) / (2*mesh.dx) + (B_cross_eta_J_j_plus_1[1] - B_cross_eta_J_j_minus_1[1]) / (2*mesh.dy);
+        }
+    }
+
+    return S;
+}
+
+
+Vec2D joule_heating_old(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BC){
+    Vec2D S = makeVec2D(mesh.nCellsX + 2, mesh.nCellsY + 2);
+
+    //updating total energy
+    double resistivity, laplacianBx, laplacianBy;
+    double dBz_dx, dBz_dy, dBy_dx, dBx_dy;
+
+
+    for (int i = 1; i < mesh.nCellsX+1; i++){
+        for (int j = 1; j < mesh.nCellsY+1; j++){
+
+            resistivity = sysPtr->interp_Resis(u[i][j]);
+
+            //induction eqn source terms
+            laplacianBx = ( u[i+1][j][5] - 2*u[i][j][5] + u[i-1][j][5] )/(mesh.dx) + ( u[i][j+1][5] - 2*u[i][j][5] + u[i][j-1][5] )/(mesh.dy);
+            laplacianBy = ( u[i+1][j][6] - 2*u[i][j][6] + u[i-1][j][6] )/(mesh.dx) + ( u[i][j+1][6] - 2*u[i][j][6] + u[i][j-1][6] )/(mesh.dy);
+
+            //energy source terms
+            dBz_dx = ( u[i+1][j][7] - u[i-1][j][7] ) / (2*mesh.dx);
+            dBz_dy = ( u[i][j+1][7] - u[i][j-1][7] ) / (2*mesh.dy);
+            dBy_dx = ( u[i+1][j][6] - u[i-1][j][6] ) / (2*mesh.dx);
+            dBx_dy = ( u[i][j+1][5] - u[i][j-1][5] ) / (2*mesh.dy);
+
+            //assembling
+            // S[i][j][4] = resistivity * ( (laplacianBx*u[i][j][5] + laplacianBy*u[i][j][6]));
+            S[i][j][4] = resistivity * ( (laplacianBx*u[i][j][5] + laplacianBy*u[i][j][6]) + ( pow(dBz_dy, 2.0) + pow(dBz_dx, 2.0) + pow((dBy_dx - dBx_dy), 2.0) ) );
+
+        }
+    }
+
+    return S;
+}
+
+
+
+
+
 Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFunc BC){
     Vec2D S = makeVec2D(mesh.nCellsX + 2, mesh.nCellsY + 2);
 
@@ -103,37 +181,37 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
 
             mass_frac_i = sysPtr->interp_mass_frac_i(u[i][j]);
             mass_frac_n = (1 - mass_frac_i);
-            mfi_x_plus = sysPtr->interp_mass_frac_i(u[i+1][j]);
-            mfi_x_minus = sysPtr->interp_mass_frac_i(u[i-1][j]);
-            mfi_y_plus = sysPtr->interp_mass_frac_i(u[i][j+1]);
-            mfi_y_minus = sysPtr->interp_mass_frac_i(u[i][j-1]);
+            // mfi_x_plus = sysPtr->interp_mass_frac_i(u[i+1][j]);
+            // mfi_x_minus = sysPtr->interp_mass_frac_i(u[i-1][j]);
+            // mfi_y_plus = sysPtr->interp_mass_frac_i(u[i][j+1]);
+            // mfi_y_minus = sysPtr->interp_mass_frac_i(u[i][j-1]);
 
 
             /* components of the convective derivative */
 
             /* wx derivatives */
-            dwx_dx = ( u[i+1][j][9] - u[i-1][j][9] ) / two_dx;
-            dwx_dy = ( u[i][j+1][9] - u[i][j-1][9] ) / two_dy;
+            // dwx_dx = ( u[i+1][j][9] - u[i-1][j][9] ) / two_dx;
+            // dwx_dy = ( u[i][j+1][9] - u[i][j-1][9] ) / two_dy;
 
-            /* wy derivatives */
-            dwy_dx = ( u[i+1][j][10] - u[i-1][j][10] ) / two_dx;
-            dwy_dy = ( u[i][j+1][10] - u[i][j-1][10] ) / two_dy;
+            // /* wy derivatives */
+            // dwy_dx = ( u[i+1][j][10] - u[i-1][j][10] ) / two_dx;
+            // dwy_dy = ( u[i][j+1][10] - u[i][j-1][10] ) / two_dy;
 
-            /* wz derivatives */
-            dwz_dx = ( u[i+1][j][11] - u[i-1][j][11] ) / two_dx;
-            dwz_dy = ( u[i][j+1][11] - u[i][j-1][11] ) / two_dy;
+            // /* wz derivatives */
+            // dwz_dx = ( u[i+1][j][11] - u[i-1][j][11] ) / two_dx;
+            // dwz_dy = ( u[i][j+1][11] - u[i][j-1][11] ) / two_dy;
 
             /* vx derivatives */
-            dvx_dx = ( u[i+1][j][1] / u[i+1][j][0] - u[i-1][j][1] / u[i-1][j][0])  / two_dx;
-            dvx_dy = ( u[i][j+1][1] / u[i][j+1][0] - u[i][j-1][1] / u[i][j-1][0])  / two_dy;
+            // dvx_dx = ( u[i+1][j][1] / u[i+1][j][0] - u[i-1][j][1] / u[i-1][j][0])  / two_dx;
+            // dvx_dy = ( u[i][j+1][1] / u[i][j+1][0] - u[i][j-1][1] / u[i][j-1][0])  / two_dy;
 
-            /* vy derivatives */
-            dvy_dx = ( u[i+1][j][2] / u[i+1][j][0] - u[i-1][j][2] / u[i-1][j][0])  / two_dx;
-            dvy_dy = ( u[i][j+1][2] / u[i][j+1][0] - u[i][j-1][2] / u[i][j-1][0])  / two_dy;
+            // /* vy derivatives */
+            // dvy_dx = ( u[i+1][j][2] / u[i+1][j][0] - u[i-1][j][2] / u[i-1][j][0])  / two_dx;
+            // dvy_dy = ( u[i][j+1][2] / u[i][j+1][0] - u[i][j-1][2] / u[i][j-1][0])  / two_dy;
 
-            /* vz derivatives */
-            dvz_dx = ( u[i+1][j][3] / u[i+1][j][0] - u[i-1][j][3] / u[i-1][j][0])  / two_dx;
-            dvx_dy = ( u[i][j+1][3] / u[i][j+1][0] - u[i][j-1][3] / u[i][j-1][0])  / two_dy;
+            // /* vz derivatives */
+            // dvz_dx = ( u[i+1][j][3] / u[i+1][j][0] - u[i-1][j][3] / u[i-1][j][0])  / two_dx;
+            // dvx_dy = ( u[i][j+1][3] / u[i][j+1][0] - u[i][j-1][3] / u[i][j-1][0])  / two_dy;
 
             /* Bx derivatives */
             dBx_dx = ( u[i+1][j][5] - u[i-1][j][5] ) / two_dx;
@@ -148,11 +226,11 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             dBz_dy = ( u[i][j+1][7] - u[i][j-1][7] ) / two_dy;
 
             /* mass_frac_i derivatives */
-            d_mfi_dx = ( mfi_x_plus - mfi_x_minus ) / two_dx;
-            d_mfi_dy = ( mfi_y_plus - mfi_y_minus ) / two_dy;
+            // d_mfi_dx = ( mfi_x_plus - mfi_x_minus ) / two_dx;
+            // d_mfi_dy = ( mfi_y_plus - mfi_y_minus ) / two_dy;
 
-            d_rho_i_dx = ( mfi_x_plus * u[i+1][j][0] - mfi_x_minus * u[i-1][j][0] ) / two_dx;
-            d_rho_i_dy = ( mfi_y_plus * u[i][j+1][0] - mfi_y_minus * u[i][j-1][0] ) / two_dy;
+            // d_rho_i_dx = ( mfi_x_plus * u[i+1][j][0] - mfi_x_minus * u[i-1][j][0] ) / two_dx;
+            // d_rho_i_dy = ( mfi_y_plus * u[i][j+1][0] - mfi_y_minus * u[i][j-1][0] ) / two_dy;
 
             /* partial pressure derivatives */
             p_n_x_plus = kBScaled * get_n_n(u[i+1][j][0], 1-mfi_x_plus, m_n) * T_x_plus;
@@ -171,25 +249,25 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
             d_pei_dx = ((p_x_plus - p_n_x_plus) - (p_x_minus - p_n_x_minus)) / two_dx;
             d_pei_dy = ((p_y_plus - p_n_y_plus) - (p_y_minus - p_n_y_minus)) / two_dy;
 
-            /* compound terms */
+            // /* compound terms */
 
-            // term 1
-            v_dot_nabla_w_x = vx * dwx_dx + vy * dwx_dy;
-            v_dot_nabla_w_y = vx * dwy_dx + vy * dwy_dy;
-            v_dot_nabla_w_z = vx * dwz_dx + vy * dwz_dy;
+            // // term 1
+            // v_dot_nabla_w_x = vx * dwx_dx + vy * dwx_dy;
+            // v_dot_nabla_w_y = vx * dwy_dx + vy * dwy_dy;
+            // v_dot_nabla_w_z = vx * dwz_dx + vy * dwz_dy;
 
-            // term 2
-            w_dot_nabla_v_x = wx * dvx_dx + wy * dvx_dy;
-            w_dot_nabla_v_y = wx * dvy_dx + wy * dvy_dy;
-            w_dot_nabla_v_z = wx * dvz_dx + wy * dvz_dy;
+            // // term 2
+            // w_dot_nabla_v_x = wx * dvx_dx + wy * dvx_dy;
+            // w_dot_nabla_v_y = wx * dvy_dx + wy * dvy_dy;
+            // w_dot_nabla_v_z = wx * dvz_dx + wy * dvz_dy;
 
-            // term 3
-            w_dot_nabla_w_x = wx * dwx_dx + wy * dwx_dy;
-            w_dot_nabla_w_y = wx * dwy_dx + wy * dwy_dy;
-            w_dot_nabla_w_z = wx * dwz_dx + wy * dwz_dy;
+            // // term 3
+            // w_dot_nabla_w_x = wx * dwx_dx + wy * dwx_dy;
+            // w_dot_nabla_w_y = wx * dwy_dx + wy * dwy_dy;
+            // w_dot_nabla_w_z = wx * dwz_dx + wy * dwz_dy;
 
-            // term 4
-            w_dot_d_mfi = wx * d_mfi_dx + wy * d_mfi_dy;
+            // // term 4
+            // w_dot_d_mfi = wx * d_mfi_dx + wy * d_mfi_dy;
 
             // term 5 (magnetic term)
             mag_prefac = 1 / (mass_frac_i * rho + 1e-200);
@@ -228,10 +306,14 @@ Vec2D w_evolution_func(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr, BCFu
 
 
             // assembling
-            double dampFac = 0.3*coll_term_prefac;
-            cellVec[9] = - v_dot_nabla_w_x - w_dot_nabla_v_x - (1 - 2*mass_frac_i) * w_dot_nabla_w_x + wx * w_dot_d_mfi + mag_term_x + p_term_x - dampFac * wx;
-            cellVec[10] = - v_dot_nabla_w_y - w_dot_nabla_v_y - (1 - 2*mass_frac_i) * w_dot_nabla_w_y + wy * w_dot_d_mfi + mag_term_y + p_term_y - dampFac * wy;
-            cellVec[11] = - v_dot_nabla_w_z - w_dot_nabla_v_z - (1 - 2*mass_frac_i) * w_dot_nabla_w_z + wz * w_dot_d_mfi + mag_term_z + p_term_z - dampFac * wz;
+            double dampFac = 0.01*coll_term_prefac;
+            // cellVec[9] = - v_dot_nabla_w_x - w_dot_nabla_v_x - (1 - 2*mass_frac_i) * w_dot_nabla_w_x + wx * w_dot_d_mfi + mag_term_x + p_term_x - dampFac * wx;
+            // cellVec[10] = - v_dot_nabla_w_y - w_dot_nabla_v_y - (1 - 2*mass_frac_i) * w_dot_nabla_w_y + wy * w_dot_d_mfi + mag_term_y + p_term_y - dampFac * wy;
+            // cellVec[11] = - v_dot_nabla_w_z - w_dot_nabla_v_z - (1 - 2*mass_frac_i) * w_dot_nabla_w_z + wz * w_dot_d_mfi + mag_term_z + p_term_z - dampFac * wz;
+
+            cellVec[9] = mag_term_x + p_term_x - dampFac * wx;
+            cellVec[10] =  mag_term_y + p_term_y - dampFac * wy;
+            cellVec[11] =  mag_term_z + p_term_z - dampFac * wz;
 
             S[i][j] = cellVec;
         }

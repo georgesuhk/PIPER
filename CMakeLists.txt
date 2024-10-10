@@ -60,6 +60,11 @@ add_executable(MHDEoS ${PROJECT_SOURCE_DIR}/src/MHDEoS.cpp)
 set_target_properties(MHDEoS PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(MHDEoS PUBLIC baseLib classesLib mutation++)
 
+# MHDResis
+add_executable(MHDResis ${PROJECT_SOURCE_DIR}/src/MHDResis.cpp)
+set_target_properties(MHDResis PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(MHDResis PUBLIC baseLib classesLib mutation++)
+
 # orzag
 add_executable(orzag ${PROJECT_SOURCE_DIR}/src/orzag.cpp)
 set_target_properties(orzag PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)

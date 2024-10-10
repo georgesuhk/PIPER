@@ -179,6 +179,14 @@ double SysCalcs::interp_Resis(double& rho, double& p){
     return EoSPtr->interp_Resis(rho, p);
 }
 
+double SysCalcs::interp_Resis(CellVec& u){
+    double rho = u[0];
+    double p = interp_p(u);
+
+    return EoSPtr->interp_Resis(rho, p);
+}
+
+
 // operated on both prim and conserv ------
 
 double SysCalcs::get_MagE(CellVec& u){
@@ -466,7 +474,7 @@ CellVec PIP0_Calcs::f(CellVec& u, int i, int j, bool interp){
     f_out[8] = 0;
     // w flux
     f_out[9] = 0;
-    f_out[10] = 0;
+    f_out[10] = 0; 
     f_out[11] = 0;
 
 
@@ -650,7 +658,7 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             mfi_y_plus = interp_mass_frac_i(u[i][j+1]);
             mfi_y_minus = interp_mass_frac_i(u[i][j-1]);
 
-            /* partial pressure derivatives */
+            /* partial pressure derivatives */ // these terms need work
             d_pn_dx = kBScaled * ( get_n_n(u[i+1][j][0], 1-mfi_x_plus, m_n) * T_x_plus - get_n_n(u[i-1][j][0], 1-mfi_x_minus, m_n) * T_x_minus) / two_dx;
             d_pn_dy = kBScaled * ( get_n_n(u[i][j+1][0], 1-mfi_y_plus, m_n) * T_y_plus - get_n_n(u[i][j-1][0], 1-mfi_y_minus, m_n) * T_y_minus) / two_dy;
 
@@ -684,24 +692,30 @@ void PIP0_Calcs::set_w_no_inert(Vec2D& u, Mesh2D& mesh){
             J_z = dBy_dx - dBx_dy;
 
             /* G */
+
             G_x = mass_frac_n * d_pei_dx - mass_frac_i * d_pn_dx;
             G_y = mass_frac_n * d_pei_dy - mass_frac_i * d_pn_dy;
             G_z = 0;
 
             /* size comparison */
-            // if (i == round(mesh.nCellsX/2) && j == 1){
-            //     cout << "1 / a_n: " << 1 / alpha_n << endl;
-            //     cout << "G_x term: " << G_x / alpha_n << endl;
-            //     cout << "mag term: " << mag_term_x << endl;
-            //     cout << "J_z term: " << J_z << endl;
-            //     cout << "J_z term * prefac: " << J_term_prefac * J_z << endl; 
-            //     cout << "prefac: " << J_term_prefac << endl;
-            // }
+            if (i == round(mesh.nCellsX/2) && j == 1){
+                cout << "d_pei_dx" << d_pei_dx << endl;
+                cout << "d_pn_dx" << d_pn_dx << endl;
+                cout << "mfi: " << mass_frac_i << ", mfn: " << mass_frac_n << endl;
+
+
+                // cout << "1 / a_n: " << 1 / alpha_n << endl;
+                // cout << "G_x term: " << G_x / alpha_n << endl;
+                // cout << "mag term: " << mag_term_x << endl;
+                // cout << "J_z term: " << J_z << endl;
+                // cout << "J_z term * prefac: " << J_term_prefac * J_z << endl; 
+                // cout << "prefac: " << J_term_prefac << endl;
+            }
 
             // setting and assembling
-            u[i][j][9] = - G_x / alpha_n + mag_term_x + J_term_prefac * J_x;
-            u[i][j][10] = - G_y / alpha_n + mag_term_y + J_term_prefac * J_y;
-            u[i][j][11] = - G_z / alpha_n + mag_term_z + J_term_prefac * J_z;
+            // u[i][j][9] = - G_x / alpha_n + mag_term_x + J_term_prefac * J_x;
+            // u[i][j][10] = - G_y / alpha_n + mag_term_y + J_term_prefac * J_y;
+            // u[i][j][11] = - G_z / alpha_n + mag_term_z + J_term_prefac * J_z;
 
 
         }

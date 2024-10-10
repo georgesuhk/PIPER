@@ -19,10 +19,13 @@ double get_therm_con(CellVec& u, int i, int j, shared_ptr<SysCalcs> sysPtr, bool
 
 // IMPLICIT SOLVERS ======
 
+/* Non-ADI Crank-Nicolson implicit solver for the diffusion equation */
+void CN_Diffusion_Solver(Vec2D& u, vector<int> varIdxList, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
+
 /* Crank-Nicolson implicit solver for the diffusion equation */
-void CN_Diffusion_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
+void CN_Diffusion_Solver_ADI(Vec2D& u, vector<int> varIdxList, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
 
 /* Crank-Nicolson implicit solver for thermal conduction */
-void CN_Conduction_Solver(Vec2D& u, int varIdx, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
+void CN_Conduction_Solver_ADI(Vec2D& u, vector<int> varIdxList, GetCoeffFunc getCoeffFunc, shared_ptr<SysCalcs> sysPtr, Mesh2D& mesh, double& dt, string diffBCType, BCFunc BCFunc);
 
 #endif

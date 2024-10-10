@@ -4,6 +4,12 @@
 #include "settings.hpp"
 #include "mesh.hpp"
 #include "calcs.hpp"
+#include <Eigen/IterativeLinearSolvers>
+#include <Eigen/Sparse>
+#include <Eigen/Dense>
+#include <Eigen/SparseCholesky>	
+
+
 
 extern const int cellVarsNums;
 // LINEAR ALGEBRA TOOLS ======

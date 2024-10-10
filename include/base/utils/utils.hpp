@@ -31,4 +31,11 @@ vector<double> linspace(double start, double end, int nPoints);
 /* Similar to python np.linspace() but samples expoentially */
 vector<double> linspaceLog(double start, double end, int nPoints);
 
+/* calculates current at a given i j position */
+Eigen::Vector3d get_J(Vec2D& u, Mesh2D& mesh, int i, int j);
+
+void enforce_symmetry(Vec2D& u, Mesh2D& mesh, double r_tol_x, double r_tol_y, bool enforce_x, bool enforce_y);
+
+
+
 #endif

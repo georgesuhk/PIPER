@@ -27,12 +27,51 @@ void LR_RT_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
     u[0] = u[1];
 
     for (int j = 0; j < mesh.nCellsY+1; j++){
+        u[0][j] = u[1][j];
+
         u[0][j][1] = -u[1][j][1];
+        u[0][j][5] = -u[1][j][5];
         u[0][j][6] = -u[1][j][6];
+
         u[0][j][9] = -u[1][j][9];
     }
 
     // right (transmissive)
+    u[mesh.nCellsX + 1] = u[mesh.nCellsX];
+
+}
+
+void TT_BR_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
+    
+    //settings BCs for each inner vector (y direction)
+    for (Vec1D& vec : u){
+        vec[0] = vec[1];
+
+        vec[mesh.nCellsY + 1] = vec[mesh.nCellsY];
+        vec[mesh.nCellsY + 1][2] = -vec[mesh.nCellsY][2];
+        vec[mesh.nCellsY + 1][6] = -vec[mesh.nCellsY][6];
+        vec[mesh.nCellsY + 1][10] = -vec[mesh.nCellsY][10];
+
+    }
+
+
+    //setting BCs for outer vector (x direction)
+    u[0] = u[1];
+    u[mesh.nCellsX + 1] = u[mesh.nCellsX];
+
+}
+
+void XT_YP_BCs(Vec2D& u, Mesh2D& mesh, shared_ptr<SysCalcs> sysPtr){
+    
+    //settings BCs for each inner vector (y direction)
+    for (Vec1D& vec : u){
+        vec[0] = vec[mesh.nCellsY];
+        vec[mesh.nCellsY + 1] = vec[1];
+    }
+
+    //setting BCs for outer vector (x direction)
+
+    u[0] = u[1];
     u[mesh.nCellsX + 1] = u[mesh.nCellsX];
 
 }
